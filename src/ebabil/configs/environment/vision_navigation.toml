@@ -1,0 +1,172 @@
+[simulation]
+policy_frequency_hz = 20.0
+
+[action]
+# ADR-020: action sözleşmesi v2. v1'de 3 boyut vardı ve ileri hız
+# max(0, a[0]) ile kırpılıyordu, yani araç yana ve geriye HİÇ uçamıyordu.
+# Bu fiziksel olarak gerçek dışıydı: bir quadrotor yatay düzlemde izotropiktir.
+#
+# v2: a = [ileri/geri, yanal, dikey, yaw-rate], hepsi işaretli.
+# Yatay hız BÜYÜKLÜĞÜ sınırlanır (yöne göre değişmez); bileşenleri tek tek
+# kırpmak çapraz komutta sqrt(2) kat hızlı uçmaya izin verirdi.
+#
+# Ölçülen gerekçe: araç hedefin 0.65 m içine episode'ların %65'inde giriyordu
+# fakat 0.243 m'lik hold halkasında duramıyordu. Yanal düzeltme için yaw
+# çevirmesi gerekiyordu, 38 dereceden fazla çevirince de hedefi kadrajdan
+# kaçırıyordu (yatay FOV 75 derece). Çıkışı olmayan bir kısıttı.
+max_forward_speed_m_s = 1.5
+max_vertical_speed_m_s = 1.0
+max_yaw_rate_rad_s = 1.5
+
+[observation]
+latent_size = 64
+latent_scale = 5.0
+waypoint_distance_scale_m = 30.0
+maximum_frame_age_s = 0.10
+
+[segment_budget]
+nominal_speed_m_s = 1.5
+speed_floor_m_s = 0.25
+time_factor = 1.75
+fixed_seconds = 5.0
+terminal_approach_seconds = 10.0
+terminal_hold_seconds = 3.0
+minimum_seconds = 20.0
+maximum_seconds = 60.0
+maximum_planned_route_length_m = 30.0
+
+# ADR-012 terminal hover görev semantiği. Görsel süreklilik yalnız target_score
+# ile kapılanır; ADR-016 uyarınca target_center_xy kapı olarak kullanılmaz.
+[terminal_hover]
+acquire_score = 0.60
+loss_score = 0.40
+acquire_seconds = 0.30
+# REV-025: max_yaw_rate 1.5 rad/s ile 0.50 s'de yalnız 43 derece dönülebilir;
+# rastgele yönde kaybedilen hedef ortalama 90 derece (1.05 s), en kötü 180
+# derece (2.09 s) dönüş ister. Eski değer toparlanma manevrasından kısaydı.
+grace_seconds = 2.50
+approach_radius_m = 2.50
+# ADR-019: inanılan hedef konumuna bu kadar yaklaşınca aktif arama başlar.
+search_entry_radius_m = 4.00
+search_timeout_seconds = 12.00
+# Hedef konum hatası yarıçapı. Güvenli iç bölgeden (0.65 m) büyük olmak
+# zorundadır; küçükse görüntü kullanılmadan başarıya ulaşılabilir.
+# ADR-019 merdiveni: D1 2.0, D2 5.0, D3 15.0, D4-D5 30.0.
+target_error_radius_m = 2.00
+
+# Bileşenler ayrı loglanır (ADR-012). hover_hold yalnız HOLD durumunda verilir;
+# toplam üst sınırı hover_hold_weight * hold_required_steps = 0.40 * 60 = 24.0.
+[terminal_hover_reward]
+# REV-029: progress rotaya normalize EDİLMEZ ve metre başına sabittir.
+#
+# REV-026 bunun bir defekt olduğunu iddia ediyordu ("uzun rotada engele çarpıp
+# kısa yoldan gitmek kârlı olur") ve kanıt olarak çarpışma oranının eğitim
+# boyunca artmasını gösteriyordu. İkisi de yanlıştı:
+#   - Çarpışma SHORT rotalarda daha sık: 5-8 m'de %23, 11-15 m'de %8. Bu oran
+#     üç farklı ödül tasarımında da aynı kaldı, yani ödül ölçeğine bağlı değil.
+#   - Eğitim boyunca artış survivorship'ti. Hedef bölgesine ulaşan episode
+#     oranı %53'ten %74'e çıktı; ULAŞANLAR arasında çarpışma oranı sabit kaldı
+#     (%27, %12, %15, %18, %17, %18).
+#
+# Normalizasyon iki koşuda ölçülerek reddedildi: tam normalize (w=15.0/L)
+# terminal hassasiyeti bozdu (başarı %42.5 -> %22.5), iki menzilli form
+# navigasyonu bozdu (başarı %0). Ayrıntı REV-029.
+#
+# Doğru kısıt yoğunluk üzerindedir: bir engelin içinden geçmenin kazancı
+# (detour_saving_for) collision_penalty'nin altında kalmalı. 5.0/m ile 5 m'lik
+# bir kısa yol 25.0 kazandırır ve collision_penalty de 25.0'dır; bu oran
+# D1'den D5'e sabittir çünkü yoğunluk rota uzunluğundan bağımsızdır.
+target_progress_weight = 5.0
+target_visible_weight = 0.005
+# REV-036: kameranın ileri görüş mesafesi irtifayla DOĞRUSALDIR:
+#   ileri görüş = 3.711 x irtifa   (kamera en üst ışını yatayın 15.1 derece altı)
+# Ölçülen defekt: engellerin üstünden uçma yolu kapatıldığında politika
+# 0.81 m irtifaya indi ve orada yalnız 3.0 m ileri görüyordu; free_space
+# hatası ~2 m olduğu için pratikte kör uçuyordu. Çarpışma %85-93'te sıkıştı.
+#
+# Gereken irtifa, sensörün gerçek menzilini free_space normalizasyon
+# derinliğiyle eşitler. REV-044 ile pitch 40 dereceye çekildiği için
+# katsayı 3.711 -> 5.626 oldu: 8.0 m / 5.626 = 1.422 m. Yani aynı görüş
+# mesafesi çok daha alçakta elde ediliyor ve tırmanma ihtiyacı azaldı.
+#
+# Ağırlık: 1 m eksik irtifa, 300 adımlık bir seyirde 0.05 x 1.0 x 300 = 15.0
+# maliyet demek. Tek çarpışmanın (25.0) altında fakat anlamlı.
+# Yalnız transit ve search durumlarında uygulanır; terminal durumlarda araç
+# hold bandına inmek ZORUNDA ve orada ceza verilmez.
+cruise_altitude_weight = 0.05
+cruise_altitude_m = 1.422
+# REV-041: kamerayı inanılan hedefe doğrultma cezası.
+#
+# ADR-020 holonomik hareketi açtı ve yönü hareketten AYIRDI: araç yana kayarak
+# hedefe gidebiliyor fakat başka yöne bakabiliyor. Ölçülen defekt: hedefin
+# 0-3 m yakınında yön hatası 101-123 derece, hedef gerçekten kadrajda kalma
+# oranı 1-2 m'de %26, ve `hold` durumuna 300 episode'da HİÇ girilmedi.
+#
+# `target_alignment` bu boşluğu kapatamaz: o yalnız hedef GÖRÜNÜRKEN merkez
+# kaymasını cezalandırır, hedef kadraj dışındayken hangi yöne dönüleceğine
+# dair gradyan vermez. Bu bileşen inanılan hedef yönünden türetilir (waypoint
+# kanalı zaten taşıyor, ayrıcalıklı değil) ve kadraj dışındayken de yön verir.
+#
+# `transit` kapsam dışıdır: seyirde kamera gittiği yöne bakmalı, yoksa kör
+# alana uçar (görüş konisi dışında 2 m'den yakın engel sayısı görünür
+# alandakinin 3 katı).
+#
+# Ağırlık: 120 derecelik hata 0.10 * (120/180) = 0.067/adım maliyet; 200
+# terminal adımda -13.3, tek çarpışmanın (25.0) altında fakat baskın.
+bearing_alignment_weight = 0.10
+target_alignment_weight = 0.20
+settle_speed_weight = 0.50
+# REV-046: ADR-012 başarısı BEŞ hover koşulunun kesişimini ister fakat ödül
+# yalnız ikisini şekillendiriyordu: konum (target_progress) ve hız
+# (settle_speed). İrtifa, tilt ve açısal hızın HİÇ gradyanı yoktu.
+#
+# Ölçülen sonuç: beş koşulun birlikte sağlandığı tek bir adım bile yok
+# (5/5 %0.0, en uzun kesintisiz dizi 0 adım) ve bu, hold süresi 3.0 s'den
+# 0.5 s'ye indirildiğinde de değişmedi — yani sorun sürede değil kesişimde.
+# Terminal fazda ihlal oranları: hız %100, irtifa %96, açısal %95, tilt %84,
+# konum %75. Şekillendirilmeyen üçü hiç iyileşmiyordu.
+#
+# Üçü de settle_speed ile aynı biçimdedir: yalnız terminal durumlarda ve
+# sınırı AŞAN fazlalığın karesi. Sınır içinde ceza yok, yani başarı ölçütü
+# ne gevşetiliyor ne sıkılaştırılıyor; yalnız ölçütün kendisi öğretiliyor.
+#
+# Ağırlıklar settle_speed ile EŞİT baskı verecek şekilde türetildi
+# (tipik fazlalık^2 x ağırlık ~= 0.78/adım):
+#   irtifa  : tipik fazlalık ~0.9 m       -> 0.96
+#   açısal  : tipik fazlalık ~0.8 rad/s   -> 1.22
+#   tilt    : tipik fazlalık ~0.26 rad    -> 11.4
+settle_altitude_weight = 0.96
+settle_tilt_weight = 11.4
+settle_angular_rate_weight = 1.22
+hover_hold_weight = 0.40
+proximity_weight = 0.05
+proximity_threshold_m = 0.75
+smoothness_weight = 0.02
+success_bonus = 30.0
+collision_penalty = 25.0
+out_of_bounds_penalty = 15.0
+abort_penalty = 10.0
+time_penalty = 0.01
+
+# [termination] ve [reward] legacy NavigationEnvConfig alanlarıdır.
+# EbabilVisionNavigation-v0 başarı/reward kararını [terminal_hover] ve
+# [terminal_hover_reward] üzerinden verir; buradaki goal_* ve reward alanları
+# terminal hover görevinde kullanılmaz. minimum_altitude_m ve maximum_tilt_deg
+# fiziksel failure yolunda (_failure_reason) kullanılmaya devam eder.
+[termination]
+goal_radius_m = 0.20
+goal_max_speed_m_s = 0.35
+goal_hold_seconds = 0.50
+minimum_altitude_m = 0.10
+maximum_tilt_deg = 75.0
+
+[reward]
+progress_weight = 5.0
+goal_bonus = 20.0
+collision_penalty = 20.0
+failure_penalty = 10.0
+proximity_weight = 0.05
+proximity_threshold_m = 0.75
+smoothness_weight = 0.02
+attitude_weight = 0.02
+time_penalty = 0.01

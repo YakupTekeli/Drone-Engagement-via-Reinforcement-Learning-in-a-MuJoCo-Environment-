@@ -1,0 +1,50 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Eğitim ve değerlendirme çıktıları
+runs/*
+checkpoints/
+videos/
+*.pt
+*.pth
+*.zip
+
+# Depoya alınan eğitilmiş modeller (22 Ekim 2026): onaylı YOLO11n dedektör
+# zinciri ve seed 20260912 PPO politikası. Onay manifesti diğer dosyaları göreli
+# yol ve SHA-256 ile bağladığı için runs/ altındaki yerleşim korunur. Aşağıdaki
+# dosyalar dışında runs/ içeriği Git dışıdır.
+!runs/detector_audit_v1_20260929/
+!runs/detector_quality_v1_20260929/
+runs/detector_quality_v1_20260929/*
+!runs/detector_quality_v1_20260929/quality_report.json
+!runs/detector_quality_v1_20260929/audit_consumed.json
+!runs/detector_quality_v1_20260929/seed_20260911/
+runs/detector_quality_v1_20260929/seed_20260911/*
+!runs/detector_quality_v1_20260929/seed_20260911/quality_metrics.json
+!runs/detector_quality_v1_20260929/seed_20260911/training_metadata.json
+!runs/detector_quality_v1_20260929/seed_20260911/weights/
+runs/detector_quality_v1_20260929/seed_20260911/weights/*
+!runs/detector_quality_v1_20260929/seed_20260911/weights/last.pt
+!runs/detector_cone_d1a_seed20260912_20260929/
+runs/detector_cone_d1a_seed20260912_20260929/*
+!runs/detector_cone_d1a_seed20260912_20260929/final_model.zip
+!runs/detector_cone_d1a_seed20260912_20260929/vecnormalize.pkl
+!runs/detector_cone_d1a_seed20260912_20260929/metadata.json
+!runs/detector_cone_d1a_seed20260912_20260929/evaluation_heldout_final_det_assist_farloss_governor.json
+
+# Paketleme ve MuJoCo günlük artıkları
+build/
+MUJOCO_LOG.TXT
+
+# İşletim sistemi ve editör dosyaları
+.DS_Store
+.idea/
+.vscode/

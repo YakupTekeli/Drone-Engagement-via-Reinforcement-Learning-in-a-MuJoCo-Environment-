@@ -1,0 +1,36 @@
+# ADR-023 §3: YOLO dedektör (Ultralytics YOLO11n) eğitimi ve kalite kapıları.
+# Kapı eşikleri ölçüm sonucuna göre DÜŞÜRÜLMEZ; geçilmeyen kapı REV bulgusu açar.
+[detector]
+schema_version = "yolo-detector-v1"
+model = "yolo11n"
+# COCO ile önceden eğitilmiş ağırlık; 29 Eylül 2026'da ultralytics/assets
+# v8.4.0 sürümünden bir kez indirildi. Sonraki koşular çevrimdışıdır.
+pretrained_weights = "runs/weights/yolo11n.pt"
+pretrained_weights_sha256 = "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1"
+imgsz = 320
+epochs = 60
+batch = 32
+# Olabilirlik ölçümü (512 görüntü): workers 0 -> 15.7 s/epoch, workers 4 -> 7.2 s.
+workers = 4
+cache = "ram"
+device = "mps"
+fliplr = 0.5
+mosaic = 1.0
+close_mosaic = 10
+inference_iou = 0.7
+max_det = 32
+
+[quality]
+model_seeds = [20260911, 20260912, 20260913]
+iou_threshold = 0.5
+obstacle_conf = 0.25
+target_conf = 0.50
+obstacle_min_area_px = 400.0
+target_near_range_m = 5.0
+minimum_obstacle_recall = 0.90
+minimum_obstacle_precision = 0.90
+minimum_target_recall = 0.85
+minimum_target_precision = 0.90
+maximum_false_target_rate = 0.05
+maximum_latency_ms = 15.0
+latency_frames = 100

@@ -1,0 +1,77 @@
+{
+  "actual_total_timesteps": 600064,
+  "artifacts": {
+    "best_model": "/Users/yakuptekeli/Documents/Ebabil Mujoco/runs/detector_cone_d1a_seed20260912_20260929/best/best_model.zip",
+    "best_normalization": "/Users/yakuptekeli/Documents/Ebabil Mujoco/runs/detector_cone_d1a_seed20260912_20260929/best/vecnormalize.pkl",
+    "final_model": "/Users/yakuptekeli/Documents/Ebabil Mujoco/runs/detector_cone_d1a_seed20260912_20260929/final_model.zip",
+    "normalization": "/Users/yakuptekeli/Documents/Ebabil Mujoco/runs/detector_cone_d1a_seed20260912_20260929/vecnormalize.pkl",
+    "progress_csv": "/Users/yakuptekeli/Documents/Ebabil Mujoco/runs/detector_cone_d1a_seed20260912_20260929/logs/progress.csv"
+  },
+  "completed_at_utc": "2026-09-29T22:58:43.297370+00:00",
+  "config": {
+    "checkpoint": {
+      "evaluation_episodes": 10,
+      "evaluation_frequency_timesteps": 50000,
+      "save_frequency_timesteps": 100000
+    },
+    "environment": {
+      "approval_manifest": "runs/detector_audit_v1_20260929/approval_manifest.json",
+      "endpoint_mode": "random_both",
+      "kind": "detection_vision",
+      "max_episode_steps": null,
+      "scene_config_path": "src/ebabil/configs/environment/static_scene_d1a.toml",
+      "scene_mode": "random_obstacles",
+      "sensor_mode": null,
+      "target_config_path": null,
+      "visual_domain_split": "train"
+    },
+    "logging": {
+      "tensorboard": true
+    },
+    "normalization": {
+      "clip_observation": 10.0,
+      "clip_reward": 10.0,
+      "observations": false,
+      "rewards": true
+    },
+    "ppo": {
+      "batch_size": 256,
+      "clip_range": 0.2,
+      "ent_coef": 0.0,
+      "gae_lambda": 0.95,
+      "gamma": 0.99,
+      "learning_rate": 0.0003,
+      "max_grad_norm": 0.5,
+      "n_epochs": 10,
+      "n_steps": 512,
+      "network_arch": [
+        256,
+        256
+      ],
+      "vf_coef": 0.5
+    },
+    "run": {
+      "n_envs": 4,
+      "seed": 20260912,
+      "total_timesteps": 600000,
+      "vector_backend": "subproc"
+    }
+  },
+  "created_at_utc": "2026-09-29T20:06:46.829445+00:00",
+  "resume": {
+    "checkpoint": null,
+    "normalization": null
+  },
+  "runtime": {
+    "ebabil_mujoco": "0.1.0",
+    "gymnasium": "1.3.0",
+    "mujoco": "3.13.0",
+    "numpy": "2.5.3",
+    "platform": "macOS-15.5-arm64-arm-64bit-Mach-O",
+    "python": "3.13.2 (v3.13.2:4f8bb3947cf, Feb  4 2025, 11:51:10) [Clang 15.0.0 (clang-1500.3.9.4)]",
+    "stable_baselines3": "2.9.0",
+    "torch": "2.14.0"
+  },
+  "schema_version": 1,
+  "status": "completed"
+}

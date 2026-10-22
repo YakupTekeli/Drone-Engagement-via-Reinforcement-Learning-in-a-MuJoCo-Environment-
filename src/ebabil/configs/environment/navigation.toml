@@ -1,0 +1,29 @@
+[simulation]
+policy_frequency_hz = 20.0
+max_episode_seconds = 20.0
+
+[action]
+max_horizontal_speed_m_s = 1.5
+max_vertical_speed_m_s = 1.0
+max_yaw_rate_rad_s = 1.5
+
+[observation]
+goal_distance_scale_m = 6.0
+
+[termination]
+goal_radius_m = 0.20
+goal_max_speed_m_s = 0.35
+goal_hold_seconds = 0.50
+minimum_altitude_m = 0.10
+maximum_tilt_rad = 1.3089969389957472
+
+[reward]
+progress_weight = 5.0
+goal_bonus = 20.0
+collision_penalty = 20.0
+failure_penalty = 10.0
+proximity_weight = 0.05
+proximity_threshold_m = 0.75
+smoothness_weight = 0.02
+attitude_weight = 0.02
+time_penalty = 0.01

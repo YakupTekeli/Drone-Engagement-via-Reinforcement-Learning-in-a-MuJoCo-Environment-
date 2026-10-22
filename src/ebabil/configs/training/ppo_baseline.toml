@@ -1,0 +1,38 @@
+[run]
+total_timesteps = 1000000
+seed = 20260910
+n_envs = 4
+vector_backend = "subproc"
+
+[environment]
+scene_mode = "clear"
+endpoint_mode = "fixed"
+sensor_mode = "ideal"
+max_episode_steps = 400
+
+[ppo]
+learning_rate = 0.0003
+n_steps = 1024
+batch_size = 256
+n_epochs = 10
+gamma = 0.99
+gae_lambda = 0.95
+clip_range = 0.2
+ent_coef = 0.0
+vf_coef = 0.5
+max_grad_norm = 0.5
+network_arch = [256, 256]
+
+[normalization]
+observations = false
+rewards = true
+clip_observation = 10.0
+clip_reward = 10.0
+
+[checkpoint]
+save_frequency_timesteps = 100000
+evaluation_frequency_timesteps = 50000
+evaluation_episodes = 10
+
+[logging]
+tensorboard = true

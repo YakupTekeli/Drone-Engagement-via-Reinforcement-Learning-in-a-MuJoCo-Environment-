@@ -1,0 +1,18 @@
+[vehicle]
+mass_kg = 1.0
+inertia_diagonal_kg_m2 = [0.005, 0.005, 0.009]
+arm_length_m = 0.23
+gravity_m_s2 = 9.80665
+
+[rotor]
+count = 4
+max_thrust_n = 6.0
+max_speed_rad_s = 950.0
+thrust_coefficient = 6.64819944598338e-6
+yaw_moment_ratio_m = 0.02
+time_constant_up_s = 0.03
+time_constant_down_s = 0.05
+reaction_torque_signs = [1, -1, 1, -1]
+
+[aerodynamics]
+quadratic_drag_coefficients_n_s2_m2 = [0.08, 0.08, 0.12]

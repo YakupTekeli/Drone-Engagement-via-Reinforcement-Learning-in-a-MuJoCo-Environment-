@@ -1,0 +1,50 @@
+# ADR-018 D1: 5-15 m rota, 20 x 20 x 3 m workspace, engel ekseni açık.
+# ADR-019: hedefin yalnız yaklaşık konumu bilinir (R = 2 m, config'te).
+# Hız D0-V ile aynı (1.5 m/s); 6 m/s yükseltmesi D2 ve vision-v2 işidir.
+[run]
+total_timesteps = 600000
+seed = 20260912
+n_envs = 4
+vector_backend = "subproc"
+
+[environment]
+kind = "vision"
+# REV-034: ADR-018 D1 satırı ~40 engel (0.10/m^2) istiyordu fakat yedi koşu
+# da "single_blocker" ile, yani TEK engelle yapıldı. Sıfır-shot sonda
+# farkı ölçtü: tek engelde çarpışma %0, 40 engelde %30.
+scene_mode = "random_obstacles"
+endpoint_mode = "random_both"
+# REV-037/038: yeni onaylı zincir. Eski `vision_audit_v2` encoder'ı legacy
+# 6 x 5 m odada 512 kare ile eğitilmişti ve D1 ortamında free_space hatası
+# 3.07 m ölçüldü; koridorlar ~2 m olduğu için sinyal gürültünün altındaydı.
+# v11: 6528 kare, D1 ortamından, hata 1.05 m, ayrıca engel haritası
+# (obstacle_map) ölçülmüş ve onaylanmış durumda (IoU 0.614 audit split).
+approval_manifest = "runs/vision_audit_v4_20260913/approval_manifest.json"
+scene_config_path = "src/ebabil/configs/environment/static_scene_d1.toml"
+
+[ppo]
+learning_rate = 0.0003
+n_steps = 512
+batch_size = 256
+n_epochs = 10
+gamma = 0.99
+gae_lambda = 0.95
+clip_range = 0.2
+ent_coef = 0.0
+vf_coef = 0.5
+max_grad_norm = 0.5
+network_arch = [256, 256]
+
+[normalization]
+observations = false
+rewards = true
+clip_observation = 10.0
+clip_reward = 10.0
+
+[checkpoint]
+save_frequency_timesteps = 100000
+evaluation_frequency_timesteps = 50000
+evaluation_episodes = 10
+
+[logging]
+tensorboard = true

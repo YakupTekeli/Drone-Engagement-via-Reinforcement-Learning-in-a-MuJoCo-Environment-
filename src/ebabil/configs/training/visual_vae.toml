@@ -1,0 +1,75 @@
+# ADR-022: etiketsiz görsel temsil. [model] ve [training] hiçbir privileged
+# etiket gerektirmez; trainer yalnız actor RGB arşivlerini açar (testli).
+# [quality] içindeki probe eşikleri yalnız ÖLÇÜM içindir: donmuş latent üzerinde
+# eğitilen tek katmanlı probe'lar etiketli zincirin (ADR-014/021) eşiklerini
+# sağlamalıdır. Probe ağırlıkları hiçbir yere gönderilmez.
+[model]
+schema_version = "visual-vae-v1"
+input_width_px = 96
+input_height_px = 72
+# ADR-022 Revizyon 1 (REV-049): 64 -> 128. Tarama, kapasitenin hedef ve engel
+# bilgisini taşıyan tek olumlu kaldıraç olduğunu ölçtü (AUROC 0.78 -> 0.81,
+# free_space MAE 0.25 -> 0.21). vision-v3 latent kanalı 4 x 128 = 512 olur.
+latent_size = 128
+# Dört stride-2 katman: 72x96 -> 36x48 -> 18x24 -> 9x12 -> 4x6.
+channel_widths = [16, 32, 64, 64]
+adaptive_exposure_target_mean = 0.25
+adaptive_exposure_min_gain = 0.50
+adaptive_exposure_max_gain = 4.00
+# REV-049: kontrastif yardımcı kayıp projeksiyon başlığı (yalnız eğitim).
+# 0 = yok. Pozitif değer runtime kodlayıcıyı değiştirmez.
+contrastive_projection_size = 0
+
+[training]
+seed = 20260911
+epochs = 45
+batch_size = 32
+learning_rate = 0.001
+# beta: piksel TOPLAMI üzerinden hesaplanan yeniden üretim hatasına göre KL
+# ağırlığı. 1.0 standart VAE'dir; 3 x 72 x 96 piksel toplamı KL'yi doğal
+# olarak baskılar, bu yüzden latent bilgi taşımaya zorlanır.
+kl_weight = 1.0
+# Posterior collapse'a karşı ilk savunma: KL ağırlığı ilk 5 epoch'ta
+# sıfırdan beta'ya doğrusal ısınır.
+kl_warmup_epochs = 5
+free_bits_nats = 0.0
+grayscale_augmentation_probability = 0.50
+# REV-049: girişe fotometrik bozulma (kanal kazancı, gamma, ofset, gürültü)
+# uygulanıp TEMİZ görüntü yeniden üretilir; latent'i küresel ton ve
+# parlaklıktan bağımsızlaştırır. Etiketsizdir. 0.0 kapalı; tarama sonucuna
+# göre ayarlanır.
+photometric_augmentation_probability = 0.0
+# REV-049: SimCLR/CURL tarzı kontrastif yardımcı kayıp (InfoNCE, iki
+# rastgele kırpılmış + fotometrik bozulmuş görünüm). Etiketsizdir. 0.0 kapalı.
+contrastive_weight = 0.0
+contrastive_temperature = 0.1
+contrastive_minimum_crop_fraction = 0.6
+# Ortalama KL'si bu eşiği aşan latent boyutu "etkin" sayılır (plan §23).
+active_unit_kl_threshold_nats = 0.01
+latency_warmup_runs = 5
+latency_measurement_runs = 50
+
+[quality]
+model_seeds = [20260911, 20260912, 20260913]
+# ADR-022 §3 kapıları.
+minimum_active_latent_units = 32
+# Yeniden üretim hatası raporlanır; eşik ilk ölçümden sonra kalibre edilir.
+# 1.0, [0, 1] piksel ölçeğinde asla aşılamaz, yani kapı şimdilik etkisizdir.
+maximum_reconstruction_mse = 1.0
+maximum_free_space_mae = 0.30
+# ADR-022 Revizyon 1 (REV-049, kullanıcı onayı 22 Eylül 2026): hedef kapısı
+# sabit 0.5 eşiğindeki recall/precision yerine eşikten bağımsız
+# çözülebilirliktir. Sabit eşik probe'un KALİBRASYONUNU ölçüyordu, latent'in
+# bilgisini değil; politika doğrusal değildir ve kendi eşiğini öğrenir.
+# Sabit eşik precision/recall raporlanmaya devam eder, kapı değildir.
+minimum_target_auroc = 0.80
+minimum_target_average_precision = 0.85
+# Engel haritası: en iyi eşikte IoU (Revizyon 1). Sabit 0.5 eşiğindeki IoU
+# (ADR-021 mirası) Revizyon 1b ile (23 Eylül 2026, kullanıcı onayı) kapı
+# olmaktan çıktı: ikinci koşuda en iyi eşikte 0.50-0.54 iken 0.5'te 0.25-0.40
+# ölçüldü, yani probe'un kalibrasyonu; değer raporlanmaya devam eder.
+minimum_obstacle_map_best_iou = 0.45
+probe_ridge_lambda = 1.0
+probe_logistic_l2 = 0.001
+probe_logistic_iterations = 200
+probe_batch_size = 64
