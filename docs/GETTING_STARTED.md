@@ -155,16 +155,68 @@ and SHA-256; if any of them is moved or modified the loader stops with
 "Onay SHA-256 eşleşmiyor" (approval hash mismatch). This is fail-closed by
 design. `.gitattributes` disables line-ending conversion for these files so
 the hashes also survive a Windows checkout. Do not edit the files by hand and
-do not change the layout under `runs/`. Right after cloning:
+do not change the layout under `runs/`.
+
+The four commands below run with the committed model right after cloning
+and installing (all were executed with exactly these paths on 22 October
+2026). The first three are headless.
+
+**a) Environment and detector smoke** (check_env, random rollout, short
+PPO, short evaluation; ~20 s). Confirms everything loads and the detector
+sees the target:
 
 ```bash
-# End-to-end smoke of the detector environment: check_env, random rollout, short PPO, evaluation
 .venv/bin/python scripts/smoke_detection_vision_env.py \
   runs/detector_audit_v1_20260929/approval_manifest.json \
   --scene-config src/ebabil/configs/environment/static_scene_d1a.toml \
   --output-dir runs/detection_vision_smoke
+```
 
-# Re-render the demo video shown in the README (needs ffmpeg)
+**b) Evaluate the policy.** Visual domain never seen in training
+(`validation`), random obstacles and random start/target placement,
+deterministic policy, terminal assist on; 40 episodes take ~5 min:
+
+```bash
+.venv/bin/python scripts/evaluate_vision_policy.py \
+  runs/detector_cone_d1a_seed20260912_20260929/final_model.zip \
+  runs/detector_audit_v1_20260929/approval_manifest.json \
+  runs/eval_seed12_heldout.json \
+  --scene-config src/ebabil/configs/environment/static_scene_d1a.toml \
+  --scene-mode random_obstacles --endpoint-mode random_both \
+  --episodes 40 --max-steps 1200 --env-version v2 \
+  --visual-domain-split validation --deterministic --terminal-assist on
+```
+
+The script prints `success_rate`, `arrival_rate`, `collision_rate` and the
+termination reasons; details go to the JSON. The author's measurement with
+this exact command: success `0.875`, arrival `0.875`, collision `0.050`. For a
+quick check pass `--episodes 4`; on 22 October 2026 that gave
+`4/4 hover_success` with `0` collisions. `--terminal-assist off` measures what
+the policy does without the assist (hover success `0`, ADR-025).
+
+**c) Watch an episode in the MuJoCo viewer.** First record a `500 Hz` replay
+(~20 s), then open the viewer:
+
+```bash
+.venv/bin/python scripts/record_vision_replay.py \
+  runs/detector_cone_d1a_seed20260912_20260929/final_model.zip \
+  runs/detector_audit_v1_20260929/approval_manifest.json \
+  runs/replays/seed12_ep310004.npz \
+  --seed 310004 --env-version v2 --terminal-assist on \
+  --scene-config src/ebabil/configs/environment/static_scene_d1a.toml \
+  --scene-mode random_obstacles --endpoint-mode random_both \
+  --visual-domain-split development_ood
+scripts/run_mjpython.sh scripts/view_policy_replay.py runs/replays/seed12_ep310004.npz --loop
+```
+
+`--seed 310004` with `development_ood` is the very episode shown in the
+README demo (`hover_success` at step 389). Change the seed for another
+episode; use `--visual-domain-split validation` for the dark held-out domain.
+
+**d) Three-panel demo video** (drone camera with YOLO boxes, chase camera,
+top-down map; needs ffmpeg, ~30 s):
+
+```bash
 .venv/bin/python scripts/render_demo_video.py \
   runs/detector_cone_d1a_seed20260912_20260929/final_model.zip \
   runs/detector_audit_v1_20260929/approval_manifest.json \
@@ -173,6 +225,10 @@ do not change the layout under `runs/`. Right after cloning:
   --scene-config src/ebabil/configs/environment/static_scene_d1a.toml \
   --visual-domain-split development_ood
 ```
+
+To continue training the committed policy (extra steps), see the `--resume`
+note in §7.2 step 7; `vecnormalize.pkl` is in the repository for that
+purpose.
 
 ### 7.2 Path B: reproduce everything from scratch
 
@@ -289,21 +345,11 @@ Seed-to-seed spread is large and training on MPS is not bit-reproducible;
 your own run is expected to land in this range, not to reproduce these exact
 numbers.
 
-### 7.3 Replay recording and demo
+### 7.3 Replay and demo with your own policy
 
-```bash
-.venv/bin/python scripts/record_vision_replay.py \
-  runs/detector_cone_d1a_seed20260912/final_model.zip \
-  runs/detector_audit/approval_manifest.json \
-  runs/replays/episode_310004.npz \
-  --seed 310004 --env-version v2 --terminal-assist on \
-  --scene-config src/ebabil/configs/environment/static_scene_d1a.toml \
-  --scene-mode random_obstacles --endpoint-mode random_both \
-  --visual-domain-split validation
-scripts/run_mjpython.sh scripts/view_policy_replay.py runs/replays/episode_310004.npz --loop
-```
-
-For the three-panel video use the `render_demo_video.py` command in §7.1.
+In commands c and d of §7.1, replace the checkpoint path with your own run's
+`final_model.zip` and the manifest path with your own
+`approval_manifest.json`; every other option stays the same.
 
 ## 8. Other platforms (Linux, CUDA, CPU only)
 
