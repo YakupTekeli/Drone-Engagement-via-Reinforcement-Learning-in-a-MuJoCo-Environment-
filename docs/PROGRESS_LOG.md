@@ -205,9 +205,20 @@ git check-attr: runs/**/approval_manifest.json text=unset; last.pt, .gif binary
 
 ### Sonraki önerilen adım
 
-Kullanıcı: `git init`, `git status` ile kontrol (`runs/` altında yalnız 11
-model dosyası, `.venv`/`build` yok), ilk commit ve push. Teknik iş: REV-051
-çarpışma kapısı kararı (dönüş-hız bağlamasıyla yeni seed veya engel belleği).
+REV-051 çarpışma kapısı kararı (dönüş-hız bağlamasıyla yeni seed veya engel
+belleği); ardından yoğunluk merdiveni.
+
+### Ek (aynı gün): GitHub'a gönderim
+
+Kullanıcı "Repoya sen pushlayabilirsin izin veriyorum" dedi; 11 Eylül
+"Git'i agent bağlamaz" kuralı bu kararla kalktı. Gönderim öncesi depoya
+girecek dosyalarla doğrulama: `evaluate_vision_policy.py` (held-out
+`validation`, deterministik, yardımcı açık, 4 episode) `4/4 hover_success`,
+çarpışma 0, ortalama getiri `+111.5`; onay yükleyicisi hash zincirini aynı
+dosyalardan doğruladı. Sonra `git init -b main`, `git add .` (227 dosya,
+`runs/` 11, sızıntı 0, 15.2 MB), commit `35d9495` ve
+`git push -u origin main`; uzak `refs/heads/main` aynı hash'te.
+Kimlik global git config'ten, kimlik bilgisi macOS keychain'den geldi.
 
 ## 1 Ekim 2026 — Sistem mimarisi diyagramı (PNG)
 
