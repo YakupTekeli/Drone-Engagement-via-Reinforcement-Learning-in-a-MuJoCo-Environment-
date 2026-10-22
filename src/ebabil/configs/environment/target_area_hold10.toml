@@ -1,0 +1,42 @@
+# REV-045 hold süresi kademesi: 1.0 s.
+#
+# YALNIZ EĞİTİM PROTOKOLÜDÜR. D1 çıkış kapısı ADR-012/ADR-018 uyarınca
+# `hold_seconds = 3.0` ile ölçülür ve evaluation varsayılan
+# `target_area.toml`'u kullanır. Bu dosya başarı ölçütünü DEĞİŞTİRMEZ;
+# yalnız politikanın öğrenmeye başlayabileceği bir giriş noktası yaratır.
+#
+# Neden gerekli. Ölçülen defekt (REV-043): beş hover koşulu birlikte
+# sağlanan tek bir adım bile yok (0/5 koşul %51.6, 5/5 koşul %0.0, en uzun
+# kesintisiz dizi 0 adım). Politika `success_bonus`'u hiç örneklemediği için
+# terminal görev hakkında öğreneceği pozitif sinyal yoktu.
+#
+# Kademeler: 0.5 -> 1.0 -> 2.0 -> 3.0 s, her biri öncekinden warm start.
+# Bu dosyadaki diğer bütün alanlar varsayılanla AYNIDIR; tek değişen
+# hold_seconds'tır, böylece kademeler arası fark tek değişkenle sınırlı kalır.
+
+[target_area]
+name = "target_area"
+size_xy_m = [2.0, 2.0]
+surface_z_m = 0.01
+thickness_m = 0.01
+safety_margin_m = 0.35
+# REV-023: 2.0 m'de uygulanabilir hold halkası yalnız 0.108 m idi
+# (nadir kör bölgesi 0.542 m ile güvenli iç bölge 0.650 m arası).
+# 1.5 m'de halka 0.242 m'ye çıktı.
+#
+# REV-044 (14 Eylül 2026): 1.5 -> 1.1 m. Kamera pitch'i 45 -> 40 dereceye
+# çekildi (ileri görüş +%52) fakat bu yakın sınırı 0.407'den 0.552 m'ye
+# taşıdı ve halka 0.098 m'ye düştü — REV-023'te blocker sayılan 0.108'den
+# bile dar. Halkayı korumak için hover yüksekliği düşürülmek ZORUNDA:
+#   pitch 40 derece, halka 0.243 m icin gereken hover yüksekliği = 1.103 m
+# Yani pitch ve hover yüksekliği tek bir geometrik karardır, ayrı seçilemez.
+#
+# Yeni geometri (hover irtifası 1.11 m):
+#   yakın sınır 0.406 m | uzak sınır 6.24 m | halka 0.244 m
+hover_height_m = 1.1
+altitude_tolerance_m = 0.20
+maximum_linear_speed_m_s = 0.25
+maximum_tilt_deg = 10.0
+maximum_angular_rate_rad_s = 0.35
+hold_seconds = 1.0
+rgba = [0.10, 0.85, 0.20, 1.0]

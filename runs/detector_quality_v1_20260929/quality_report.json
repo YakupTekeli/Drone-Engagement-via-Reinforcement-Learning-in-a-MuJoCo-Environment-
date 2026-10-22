@@ -1,0 +1,179 @@
+{
+  "aborted_seed_directories": [
+    20260912
+  ],
+  "candidate_seed": 20260911,
+  "candidate_weights": "seed_20260911/weights/last.pt",
+  "candidate_weights_sha256": "8a9b537d863cee9a3a498f465c72d9845530f76d69cef393dd62ca5e175059c8",
+  "checks": {
+    "20260911": {
+      "development_ood": {
+        "false_target_rate": true,
+        "false_target_rate_value": 0.0045662100456621,
+        "latency": true,
+        "latency_median_ms_value": 5.233000000771426,
+        "obstacle_precision": true,
+        "obstacle_precision_value": 0.9554869986778316,
+        "obstacle_recall": true,
+        "obstacle_recall_value": 0.9833641404805915,
+        "target_precision": true,
+        "target_precision_value": 0.9820359281437125,
+        "target_recall": true,
+        "target_recall_value": 0.9826839826839827
+      },
+      "validation": {
+        "false_target_rate": true,
+        "false_target_rate_value": 0.012987012987012988,
+        "latency": true,
+        "latency_median_ms_value": 5.849041500368912,
+        "obstacle_precision": true,
+        "obstacle_precision_value": 0.93927304964539,
+        "obstacle_recall": true,
+        "obstacle_recall_value": 0.9502026635784597,
+        "target_precision": true,
+        "target_precision_value": 0.9237804878048781,
+        "target_recall": true,
+        "target_recall_value": 0.9726027397260274
+      }
+    }
+  },
+  "dataset": {
+    "export_summary_sha256": "a956228d588cbe920028aabf4606f77700d1a4491b13599fc3185ea6f81b565d",
+    "frames_sha256": "2985b37048adefcf60822ec47cfbde84289eeeba9eac4d23e1d6d413e733e3c3",
+    "min_area_px": 16,
+    "min_side_px": 3,
+    "schema_version": "yolo-dataset-v1",
+    "source_provenance": {
+      "config_sha256": "9412088f40bb464d44f981ed1fd4cde98cc60bc984b006891a530f223d68e79d",
+      "manifest_sha256": "6ed5f9f83cf7d8dbc8da6eef9b407f80ff8d52ad9b418d3a72bd31d873a84ce4",
+      "metadata_sha256": "3d789185d18ac10352d68ef0cfcfa77a0b637216d49e08cc97b63780fb88f7c3",
+      "schema_version": "vision-dataset-v4",
+      "statistics_sha256": "bd9e0824e6a6cdc5142206896701c57cf2c9d9e5aa2b1768a99557c732c3c7f8"
+    }
+  },
+  "decision": "Kullan\u0131c\u0131 karar\u0131 (29 Eyl\u00fcl 2026): ilk seed b\u00fct\u00fcn ADR-023 kap\u0131lar\u0131n\u0131 iki geli\u015ftirme b\u00f6l\u00fcm\u00fcnde ge\u00e7ti\u011fi ve hedef yaln\u0131z u\u00e7u\u015fta kutu tespiti oldu\u011fu i\u00e7in kalan iki seed beklenmeden tek seed ile audit'e ge\u00e7ildi; seed 20260912 4. epoch'ta durduruldu, 20260913 ba\u015flamad\u0131.",
+  "detector_config": {
+    "batch": 32,
+    "cache": "ram",
+    "close_mosaic": 10,
+    "device": "mps",
+    "epochs": 60,
+    "fliplr": 0.5,
+    "imgsz": 320,
+    "inference_iou": 0.7,
+    "max_det": 32,
+    "model": "yolo11n",
+    "mosaic": 1.0,
+    "pretrained_weights": "runs/weights/yolo11n.pt",
+    "pretrained_weights_sha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1",
+    "schema_version": "yolo-detector-v1",
+    "workers": 4
+  },
+  "epochs_override": null,
+  "finalized_from_completed_seeds": true,
+  "kind": "yolo-detector",
+  "passed": true,
+  "planned_model_seeds": [
+    20260911,
+    20260912,
+    20260913
+  ],
+  "quality_config": {
+    "iou_threshold": 0.5,
+    "latency_frames": 100,
+    "maximum_false_target_rate": 0.05,
+    "maximum_latency_ms": 15.0,
+    "minimum_obstacle_precision": 0.9,
+    "minimum_obstacle_recall": 0.9,
+    "minimum_target_precision": 0.9,
+    "minimum_target_recall": 0.85,
+    "model_seeds": [
+      20260911
+    ],
+    "obstacle_conf": 0.25,
+    "obstacle_min_area_px": 400.0,
+    "target_conf": 0.5,
+    "target_near_range_m": 5.0
+  },
+  "schema_version": "yolo-detector-quality-report-v1",
+  "seed_results": {
+    "20260911": {
+      "grayscale_validation": {
+        "false_target_rate": 0.0,
+        "frames": 576.0,
+        "negative_frames": 231.0,
+        "obstacle_ground_truth_large": 1727.0,
+        "obstacle_precision": 0.9040948275862069,
+        "obstacle_predictions_counted": 1856.0,
+        "obstacle_recall": 0.7915460335842501,
+        "obstacle_recall_all_sizes": 0.6922442244224423,
+        "target_frames_near": 219.0,
+        "target_precision": 0.9193548387096774,
+        "target_predictions": 62.0,
+        "target_recall": 0.1689497716894977,
+        "target_recall_all_ranges": 0.16715542521994134
+      },
+      "map_info": {
+        "development_ood": {
+          "map50": 0.9711540393037958,
+          "map50_95": 0.8897566823489267,
+          "map50_obstacle": 0.9626494439645901,
+          "map50_target": 0.9796586346430016
+        },
+        "validation": {
+          "map50": 0.9261051178092339,
+          "map50_95": 0.8148665006675063,
+          "map50_obstacle": 0.9023257126562452,
+          "map50_target": 0.9498845229622226
+        }
+      },
+      "metrics": {
+        "development_ood": {
+          "false_target_rate": 0.0045662100456621,
+          "frames": 576.0,
+          "latency_frames": 100.0,
+          "latency_mean_ms": 5.271165820140595,
+          "latency_median_ms": 5.233000000771426,
+          "latency_p90_ms": 5.590050298815186,
+          "negative_frames": 219.0,
+          "obstacle_ground_truth_large": 1623.0,
+          "obstacle_precision": 0.9554869986778316,
+          "obstacle_predictions_counted": 2269.0,
+          "obstacle_recall": 0.9833641404805915,
+          "obstacle_recall_all_sizes": 0.9434290687554395,
+          "target_frames_near": 231.0,
+          "target_precision": 0.9820359281437125,
+          "target_predictions": 334.0,
+          "target_recall": 0.9826839826839827,
+          "target_recall_all_ranges": 0.9344729344729344
+        },
+        "validation": {
+          "false_target_rate": 0.012987012987012988,
+          "frames": 576.0,
+          "latency_frames": 100.0,
+          "latency_mean_ms": 5.779622890040628,
+          "latency_median_ms": 5.849041500368912,
+          "latency_p90_ms": 6.034295200333872,
+          "negative_frames": 231.0,
+          "obstacle_ground_truth_large": 1727.0,
+          "obstacle_precision": 0.93927304964539,
+          "obstacle_predictions_counted": 2256.0,
+          "obstacle_recall": 0.9502026635784597,
+          "obstacle_recall_all_sizes": 0.8741749174917491,
+          "target_frames_near": 219.0,
+          "target_precision": 0.9237804878048781,
+          "target_predictions": 328.0,
+          "target_recall": 0.9726027397260274,
+          "target_recall_all_ranges": 0.8885630498533724
+        }
+      },
+      "training_metadata": "seed_20260911/training_metadata.json"
+    }
+  },
+  "weights_artifacts": {
+    "20260911": {
+      "path": "seed_20260911/weights/last.pt",
+      "sha256": "8a9b537d863cee9a3a498f465c72d9845530f76d69cef393dd62ca5e175059c8"
+    }
+  }
+}

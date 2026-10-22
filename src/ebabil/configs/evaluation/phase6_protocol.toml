@@ -1,0 +1,39 @@
+[experiment]
+training_seeds = [20260910, 20260911, 20260912]
+held_out_episode_seeds = [
+    310001, 310002, 310003, 310004, 310005,
+    310006, 310007, 310008, 310009, 310010,
+    310011, 310012, 310013, 310014, 310015,
+    310016, 310017, 310018, 310019, 310020,
+]
+pilot_timesteps = 100000
+full_timesteps = 1000000
+primary_scenario = "fixed_start_fixed_goal"
+
+[thresholds]
+minimum_success_rate = 0.95
+maximum_collision_rate = 0.0
+
+[[scenarios]]
+name = "fixed_start_fixed_goal"
+scene_mode = "clear"
+endpoint_mode = "fixed"
+sensor_mode = "ideal"
+
+[[scenarios]]
+name = "random_start_fixed_goal"
+scene_mode = "clear"
+endpoint_mode = "random_start"
+sensor_mode = "ideal"
+
+[[scenarios]]
+name = "random_start_random_goal"
+scene_mode = "clear"
+endpoint_mode = "random_both"
+sensor_mode = "ideal"
+
+[[scenarios]]
+name = "random_endpoints_imperfect_range"
+scene_mode = "clear"
+endpoint_mode = "random_both"
+sensor_mode = "imperfect"

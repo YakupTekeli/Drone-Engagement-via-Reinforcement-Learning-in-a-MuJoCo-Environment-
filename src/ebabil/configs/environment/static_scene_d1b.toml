@@ -1,0 +1,91 @@
+# REV-039 yoğunluk merdiveni basamağı: seyrek-orta (10 engel, 0.025/m^2).
+#
+# Neden merdiven gerekti. `40` engelli spesifikasyon D1'i doğrudan koşmak
+# `%0` başarı verdi ve `2067` episode'un hiçbirinde başarı örneklenmedi;
+# politika `success_bonus`'u hiç deneyimlemediği için terminal görev için
+# öğreneceği pozitif sinyal yoktu (REV-039).
+#
+# Ölçülen zorluk kaynağı koridor genişliği DEĞİL (yoğunlukla `2.70 -> 2.10 m`
+# arası değişiyor), rota koridorundaki ardışık karar sayısı:
+#   1 engel -> 1.0 karar    10 engel -> 2.0 karar    40 engel -> 6.1 karar
+# Karar başına `%20` hata varsayımıyla hayatta kalma: `%80`, `%63`, `%26`.
+#
+# Bu basamakta koridorda ortalama ~2.0 engel var. ADR-018 engel
+# zorluğunu zaten kademeli bir eksen olarak tanımlar:
+#   tek engel -> seyrek -> geçit -> koridor -> dar geçit -> yoğun karma
+#
+# Rota bandı, engel yüksekliği ve zemin boyutu D1 ile AYNIDIR; değişen tek
+# şey engel sayısıdır. Böylece basamaklar arası fark tek değişkenle sınırlı
+# kalır ve warm start anlamlı olur.
+
+# ADR-018 D1: 5-15 m rota, 20 x 20 x 3 m workspace.
+# Engel yoğunluğu ~0.10/m^2 (400 m^2 -> 40 engel); legacy 6 x 5 m sahnedeki
+# 0.27/m^2 yoğunluk bu ölçekte MuJoCo geom bütçesini aşardı.
+[scene]
+workspace_min_m = [-10.0, -10.0, 0.0]
+workspace_max_m = [10.0, 10.0, 3.0]
+start_world_m = [-6.0, 0.0, 1.0]
+goal_world_m = [6.0, 0.0, 1.0]
+# REV-040: hedefin workspace kenarına çok yakın örneklenmesi.
+#
+# Ölçülen defekt: endpoint kutusu +-9.0 m, workspace +-10.0 m, yani hedefin
+# kenara en kötü payı 1.0 m'ydi ve hedeflerin %56'sı kenara 2 m'den yakındı.
+# Terminal manevra `approach_radius_m = 2.5 m` alan ister, dolayısıyla bu
+# episode'larda manevra workspace dışına taşıyordu. Eğitimde ölçülen:
+# `out_of_bounds` terminasyonlarının medyanı hedefe **2.29 m** mesafede,
+# `hover_abort_target_lost` medyanı **2.33 m** — yani hatalar hedefin
+# yakınında, manevra alanı yetmediği için oluyordu.
+#
+# Kutu +-7.5 m'ye küçültüldü: kenar payı 2.5 m = approach_radius_m.
+# Köşegen 21.21 m olduğu için rota bandının üst sınırı 22 -> 21 m yapıldı;
+# aksi halde üretici uzun rotaları bulamaz.
+random_endpoint_min_m = [-7.5, -7.5, 0.75]
+random_endpoint_max_m = [7.5, 7.5, 1.75]
+# Kullanıcı kararı (13 Eylül 2026): ADR-018 D1 satırı `5-15 m` diyordu fakat
+# 20 x 20 m alanda 5 metrelik bir rota anlamsızdı; araç hedefin yanında
+# başlıyor ve alanı hiç geçmiyordu. Band `16-22 m`'ye çıkarıldı, yani araç
+# örnekleme kutusunun (18 x 18 m) karşı kenarından başlar.
+# Episode bütçesi kırpılmıyor: 22 m -> 43.7 s (874 adım), sınır 60 s.
+minimum_endpoint_separation_m = 16.0
+maximum_endpoint_separation_m = 21.0
+obstacle_count = 10
+# REV-035 (13 Eylül 2026): engel yükseklikleri tavana kadar çıkarıldı.
+#
+# Önce yarı-boyut z bandı [0.40, 1.20] idi, yani engel yüksekliği 0.80-2.40 m.
+# Workspace tavanı 3.00 m olduğu için tepede 0.60 m'lik bir koridor kalıyordu
+# ve politika ÜSTÜNDEN uçmayı öğrendi: ölçülen seyir irtifası 2.36-2.51 m,
+# yani tam o boşluk. Sıfır kaçınma manevrası yapıyordu.
+#
+# Bu aynı zamanda üreticinin kendi varsayımıyla çelişiyordu:
+# has_navigable_xy_path 2 BOYUTLU yol doğrular, yani "etrafından dolaşılabilir"
+# garanti eder. Üstünden uçmak bu doğrulamayı anlamsız kılıyordu.
+#
+# z yarı-boyutu tavanın yarısına sabitlendi (1.50 -> yükseklik 3.00 m = tavan),
+# yani üstünden geçmek fiziksel olarak imkânsız. Yatay boyutlar değişmedi.
+obstacle_half_size_min_m = [0.15, 0.15, 1.50]
+obstacle_half_size_max_m = [0.45, 0.45, 1.50]
+endpoint_clearance_m = 0.40
+obstacle_clearance_m = 0.10
+vehicle_clearance_m = 0.25
+path_grid_resolution_m = 0.10
+max_sampling_attempts = 5000
+max_scene_attempts = 100
+
+# REV-030: MJCF'teki zemin düzlemi görsel olarak yalnız 10 x 10 m'dir
+# (size="5 5 0.1"). MuJoCo düzlemleri ÇARPIŞMADA sonsuzdur, yani fizik
+# etkilenmez; fakat RENDER bu dikdörtgenle sınırlıdır ve dışında kamera boşluk
+# görür. 20 x 20 m workspace'te ölçülen sonuç:
+#   hedefin zemin dışında kaldığı episode        : %65
+#   rotanın zemin dışı kısmı (medyan)            : %39
+#   kameranın hiç zemin görmediği poz (D1 örneği): %52
+# Encoder legacy 6 x 5 m workspace'te eğitildi ve orada bu oran %0'dı.
+#
+# Gereken yarı-boyut, workspace köşesinden kamera zemin izinin tavan
+# irtifasındaki uzak sınırına kadardır: 10 + 3.71 * 3.0 = 21.13 m.
+# ADR-008 legacy sahnesi ve onaylı encoder zinciri 5.0 m ile üretildiği için
+# legacy config'te bu alan YOKTUR ve varsayılan 5.0 korunur.
+#
+# REV-044: pitch 45 -> 40 dereceye çekilince kamera daha uzağı görür
+# (tavan irtifasında uzak sınır 11.13 -> 16.88 m), bu yüzden zemin de
+# büyütülmek zorunda: 10 + 16.88 = 26.88 m.
+ground_half_size_m = 26.88

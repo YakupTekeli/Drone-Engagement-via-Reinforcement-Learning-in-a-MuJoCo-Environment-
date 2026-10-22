@@ -1,0 +1,50 @@
+[model]
+schema_version = "vision-encoder-v9"
+input_width_px = 96
+input_height_px = 72
+latent_size = 64
+adaptive_exposure_target_mean = 0.25
+adaptive_exposure_min_gain = 0.50
+adaptive_exposure_max_gain = 4.00
+collision_risk_score_threshold = 0.62
+
+[training]
+seed = 20260911
+epochs = 45
+batch_size = 32
+learning_rate = 0.001
+target_visibility_weight = 1.0
+target_center_weight = 3.0
+free_space_weight = 1.0
+target_mask_weight = 0.75
+obstacle_mask_weight = 0.50
+mask_positive_weight = 3.0
+collision_risk_weight = 1.5
+# Risk BCE'sinde pozitif sınıf ağırlığı (REV-020). `1.0` ağırlıksız BCE ile
+# matematiksel olarak aynıdır ve onaylı `vision-encoder-v9` bu değerle tekrar
+# üretilebilir. `2.0` ve `3.0` değerleri `vision-dataset-v4c` üzerinde ölçüldü;
+# ikisi de altı risk kapısının tamamını aynı anda geçirmedi (REV-021). Kalibrasyon
+# D0-V risk head çalışmasına bırakıldı.
+collision_risk_positive_weight = 1.0
+collision_risk_threshold = 0.25
+grayscale_augmentation_probability = 0.50
+latency_warmup_runs = 5
+latency_measurement_runs = 50
+
+[quality]
+model_seeds = [20260911, 20260912, 20260913]
+minimum_target_precision = 0.78
+minimum_target_recall = 0.85
+maximum_target_center_error = 0.30
+maximum_free_space_mae = 0.30
+minimum_free_space_improvement = 0.15
+minimum_risk_precision = 0.65
+minimum_risk_recall = 0.70
+minimum_risk_specificity = 0.50
+# REV-037: bu üç eşik, engel haritası (9 x 12 mesafe x yön ızgarası) için
+# eklendi. Bu config'in tanımladığı encoder sürümleri haritayı politikaya
+# VERMEZ; eşikler yalnız geriye dönük uyumluluk için burada durur ve `0.0`
+# bırakılmıştır (kapı etkisiz). Haritayı kullanan sürüm v11'dir.
+minimum_obstacle_map_iou = 0.0
+minimum_obstacle_map_precision = 0.0
+minimum_obstacle_map_recall = 0.0

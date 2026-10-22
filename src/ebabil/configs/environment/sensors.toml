@@ -1,0 +1,14 @@
+[rangefinder]
+ray_count = 16
+field_of_view_rad = 6.283185307179586
+min_range_m = 0.05
+max_range_m = 5.0
+origin_body_m = [0.0, 0.0, 0.0]
+geom_group = 1
+
+[imperfections]
+sample_period_s = 0.02
+delay_s = 0.04
+noise_std = 0.01
+bias_std = 0.005
+dropout_probability = 0.01

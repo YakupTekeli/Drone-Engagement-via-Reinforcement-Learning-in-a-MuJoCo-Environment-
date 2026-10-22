@@ -1,0 +1,125 @@
+# REV-037: D1 ortamı için encoder dataset'i.
+#
+# Neden gerekli. Onaylı encoder (`vision-encoder-v9/v10`) legacy 6 x 5 m
+# odada, 0.80-2.40 m yüksek engellerle ve 512 kare üzerinde eğitildi.
+# D1 ortamı 20 x 20 m, engeller tavana kadar (3.00 m) ve koridorlar ~2 m.
+# Ölçülen sonuç: encoder'ın free_space tahmininin D1'de ortalama hatası
+# 3.07 m (%90 dilimi 6.98 m) ve sistematik olarak "daha dolu" yönünde
+# (4.13 m'lik boşluğu 0.74 m sanıyor). Koridor genişliği ~2 m olduğu için
+# sinyal gürültünün altında kaldı ve politika 600k adımda kaçınma
+# öğrenemedi (çarpışma %84'te yatay).
+#
+# Bu config'in legacy'den farkları ve gerekçeleri:
+#
+#   kare sayısı       512 -> 5 328    (384 sahne x 12 poz + doğrulama/audit)
+#                                     3.07 m hatanın tek başına en büyük
+#                                     açıklaması veri kıtlığıydı.
+#   yanal offset      1.25 -> 2.50 m  legacy oda 6 x 5 m'ydi; D1 koridorları
+#                                     ~2 m ve araç rotadan daha çok sapıyor.
+#   irtifa bandı      0.80-2.10 ->    hold bandı 1.31-1.71 m, seyir irtifası
+#                     1.20-2.90 m     2.156 m (REV-036), tavan 3.00 m.
+#                                     Eski üst sınır seyir irtifasının
+#                                     ALTINDAYDI, yani encoder politikanın
+#                                     uçtuğu irtifayı hiç görmemişti.
+#   split_salt        yeni değer      eski dataset'in seed ayrımıyla
+#                                     karışmaması için.
+#   schema_version    v4 (değişmedi)  schema DOSYA FORMATINI gösterir; npz
+#                                     dizileri aynı kaldığı için değişmez.
+#                                     Bu dataset'in kimliği split_salt ve
+#                                     approval manifest'teki config hash'idir.
+#
+# Sahne config'i komut satırından verilir ve ZORUNLUDUR:
+#   --scene-config src/ebabil/configs/environment/static_scene_d1.toml
+# Verilmezse legacy workspace kullanılır ve bu config'in amacı boşa çıkar.
+
+[dataset]
+schema_version = "vision-dataset-v4"
+base_seed = 20260911
+split_salt = "ebabil-vision-d1-v5"
+train_scene_count = 384
+validation_scene_count = 48
+development_ood_scene_count = 48
+audit_scene_count = 64
+samples_per_scene = 12
+visual_distractor_count = 4
+train_obstacle_geometries = ["box", "cylinder", "capsule", "sphere"]
+validation_obstacle_geometries = ["box", "cylinder", "capsule", "sphere"]
+development_ood_obstacle_geometries = ["box", "cylinder", "capsule", "sphere"]
+audit_obstacle_geometries = ["ellipsoid"]
+scene_mode = "random_obstacles"
+endpoint_mode = "random_both"
+minimum_progress = 0.0
+maximum_progress = 1.0
+maximum_lateral_offset_m = 2.50
+minimum_altitude_m = 1.20
+maximum_altitude_m = 2.90
+maximum_yaw_jitter_deg = 35.0
+target_negative_fraction = 0.30
+# REV-019: ADR-012 hover zarfından örneklenen poz ailesi. Rota ailesi tek başına
+# hold pozunu yalnız ~%1 temsil ediyordu; terminal görevin target_score kapısı
+# bu bölgeye dayandığı için açıkça örnekleniyor.
+hold_pose_fraction = 0.20
+negative_yaw_min_deg = 70.0
+negative_yaw_max_deg = 140.0
+free_space_max_depth_m = 8.0
+minimum_target_pixels = 8
+
+[visual.train]
+name = "train_broad_randomized"
+light_scale = [0.50, 1.50]
+texture_tint_min = [0.68, 0.68, 0.68]
+texture_tint_max = [1.25, 1.25, 1.25]
+obstacle_rgb_min = [0.05, 0.05, 0.05]
+obstacle_rgb_max = [0.92, 0.92, 0.92]
+target_rgb_min = [0.03, 0.42, 0.03]
+target_rgb_max = [0.32, 1.00, 0.26]
+exposure_gain = [0.60, 1.40]
+gamma = [0.74, 1.30]
+noise_std = [0.00, 0.040]
+vignette_strength = [0.00, 0.32]
+blur_probability = 0.50
+
+[visual.validation]
+name = "heldout_dim_cool"
+light_scale = [0.55, 0.75]
+texture_tint_min = [0.72, 0.82, 1.05]
+texture_tint_max = [0.84, 0.94, 1.18]
+obstacle_rgb_min = [0.10, 0.10, 0.18]
+obstacle_rgb_max = [0.62, 0.62, 0.82]
+target_rgb_min = [0.04, 0.45, 0.04]
+target_rgb_max = [0.16, 0.60, 0.18]
+exposure_gain = [0.65, 0.80]
+gamma = [1.10, 1.28]
+noise_std = [0.012, 0.028]
+vignette_strength = [0.15, 0.30]
+blur_probability = 0.50
+
+[visual.development_ood]
+name = "development_bright_warm"
+light_scale = [1.25, 1.45]
+texture_tint_min = [1.08, 0.82, 0.68]
+texture_tint_max = [1.22, 0.94, 0.82]
+obstacle_rgb_min = [0.24, 0.12, 0.05]
+obstacle_rgb_max = [0.94, 0.84, 0.72]
+target_rgb_min = [0.16, 0.90, 0.10]
+target_rgb_max = [0.30, 1.00, 0.24]
+exposure_gain = [1.18, 1.35]
+gamma = [0.76, 0.88]
+noise_std = [0.018, 0.035]
+vignette_strength = [0.05, 0.20]
+blur_probability = 0.70
+
+[visual.audit]
+name = "audit_neutral"
+light_scale = [0.90, 1.10]
+texture_tint_min = [0.78, 0.88, 0.78]
+texture_tint_max = [1.12, 1.20, 1.12]
+obstacle_rgb_min = [0.12, 0.12, 0.12]
+obstacle_rgb_max = [0.88, 0.88, 0.88]
+target_rgb_min = [0.03, 0.42, 0.03]
+target_rgb_max = [0.32, 1.00, 0.26]
+exposure_gain = [0.82, 1.18]
+gamma = [0.88, 1.12]
+noise_std = [0.008, 0.030]
+vignette_strength = [0.04, 0.24]
+blur_probability = 0.60

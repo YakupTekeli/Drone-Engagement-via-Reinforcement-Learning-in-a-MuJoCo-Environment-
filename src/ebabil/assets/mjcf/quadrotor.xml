@@ -1,0 +1,104 @@
+<mujoco model="ebabil_quadrotor">
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" gravity="0 0 -9.80665" integrator="RK4"/>
+
+  <visual>
+    <global azimuth="135" elevation="-25"/>
+    <headlight ambient="0.35 0.35 0.35" diffuse="0.7 0.7 0.7" specular="0.2 0.2 0.2"/>
+  </visual>
+
+  <default>
+    <geom friction="0.8 0.1 0.1" condim="4"/>
+    <default class="visual">
+      <geom contype="0" conaffinity="0" group="2"/>
+    </default>
+    <default class="collision">
+      <geom group="3" rgba="0.3 0.3 0.3 0.25"/>
+    </default>
+  </default>
+
+  <asset>
+    <material name="body_material" rgba="0.12 0.15 0.18 1"/>
+    <material name="front_material" rgba="0.9 0.25 0.12 1"/>
+    <material name="rear_material" rgba="0.15 0.45 0.9 1"/>
+    <material name="propeller_material" rgba="0.18 0.18 0.18 0.45"/>
+    <texture name="ground_texture" type="2d" builtin="checker"
+             rgb1="0.18 0.18 0.18" rgb2="0.24 0.24 0.24" width="256" height="256"/>
+    <!-- Kullanıcı kararı (26 Eylül 2026, ADR-023 §6): zemin yansıması kapalı. 0.05 iken engellerin
+         yarı saydam yansımaları çiziliyordu ve dedektör verisinde etiketsiz sahte engel görünümü üretiyordu. -->
+    <material name="ground_material" texture="ground_texture" texrepeat="4 4" reflectance="0"/>
+  </asset>
+
+  <worldbody>
+    <light name="key_light" pos="1 -2 4" dir="-0.2 0.3 -1"/>
+    <camera name="overview" pos="2.4 -2.4 1.8" xyaxes="0.707 0.707 0 -0.35 0.35 0.87"/>
+    <geom name="ground" type="plane" size="5 5 0.1" material="ground_material"/>
+
+    <body name="quadrotor" pos="0 0 1">
+      <freejoint name="root"/>
+      <inertial pos="0 0 0" mass="1.0" diaginertia="0.005 0.005 0.009"/>
+
+      <geom name="body_collision" class="collision" type="box" size="0.09 0.07 0.035"/>
+      <geom name="rotor_collision_front_left" class="collision" type="cylinder"
+            pos="0.162635 0.162635 0.008" size="0.075 0.004"/>
+      <geom name="rotor_collision_front_right" class="collision" type="cylinder"
+            pos="0.162635 -0.162635 0.008" size="0.075 0.004"/>
+      <geom name="rotor_collision_rear_right" class="collision" type="cylinder"
+            pos="-0.162635 -0.162635 0.008" size="0.075 0.004"/>
+      <geom name="rotor_collision_rear_left" class="collision" type="cylinder"
+            pos="-0.162635 0.162635 0.008" size="0.075 0.004"/>
+      <geom name="body_visual" class="visual" type="box" size="0.09 0.07 0.035"
+            material="body_material"/>
+      <geom name="front_marker" class="visual" type="box" pos="0.095 0 0"
+            size="0.012 0.04 0.012" material="front_material"/>
+
+      <geom name="arm_front_left" class="visual" type="capsule" size="0.012"
+            fromto="0 0 0 0.162635 0.162635 0" material="body_material"/>
+      <geom name="arm_front_right" class="visual" type="capsule" size="0.012"
+            fromto="0 0 0 0.162635 -0.162635 0" material="body_material"/>
+      <geom name="arm_rear_right" class="visual" type="capsule" size="0.012"
+            fromto="0 0 0 -0.162635 -0.162635 0" material="body_material"/>
+      <geom name="arm_rear_left" class="visual" type="capsule" size="0.012"
+            fromto="0 0 0 -0.162635 0.162635 0" material="body_material"/>
+
+      <geom name="prop_front_left" class="visual" type="cylinder" pos="0.162635 0.162635 0.008"
+            size="0.075 0.002" material="propeller_material"/>
+      <geom name="prop_front_right" class="visual" type="cylinder" pos="0.162635 -0.162635 0.008"
+            size="0.075 0.002" material="propeller_material"/>
+      <geom name="prop_rear_right" class="visual" type="cylinder" pos="-0.162635 -0.162635 0.008"
+            size="0.075 0.002" material="propeller_material"/>
+      <geom name="prop_rear_left" class="visual" type="cylinder" pos="-0.162635 0.162635 0.008"
+            size="0.075 0.002" material="propeller_material"/>
+
+      <site name="imu" type="sphere" pos="0 0 0" size="0.008" rgba="0.2 1 0.2 1"/>
+      <site name="rotor_front_left" type="sphere" pos="0.162635 0.162635 0" size="0.01"
+            rgba="0.9 0.25 0.12 1"/>
+      <site name="rotor_front_right" type="sphere" pos="0.162635 -0.162635 0" size="0.01"
+            rgba="0.9 0.25 0.12 1"/>
+      <site name="rotor_rear_right" type="sphere" pos="-0.162635 -0.162635 0" size="0.01"
+            rgba="0.15 0.45 0.9 1"/>
+      <site name="rotor_rear_left" type="sphere" pos="-0.162635 0.162635 0" size="0.01"
+            rgba="0.15 0.45 0.9 1"/>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- Controls are rotor thrust in Newtons. Yaw moment arm is ±0.02 m. -->
+    <general name="thrust_front_left" site="rotor_front_left"
+             gear="0 0 1 0 0 0.02" ctrlrange="0 6"/>
+    <general name="thrust_front_right" site="rotor_front_right"
+             gear="0 0 1 0 0 -0.02" ctrlrange="0 6"/>
+    <general name="thrust_rear_right" site="rotor_rear_right"
+             gear="0 0 1 0 0 0.02" ctrlrange="0 6"/>
+    <general name="thrust_rear_left" site="rotor_rear_left"
+             gear="0 0 1 0 0 -0.02" ctrlrange="0 6"/>
+  </actuator>
+
+  <sensor>
+    <framepos name="position" objtype="body" objname="quadrotor"/>
+    <framequat name="orientation" objtype="body" objname="quadrotor"/>
+    <velocimeter name="linear_velocity_body" site="imu"/>
+    <gyro name="angular_velocity_body" site="imu"/>
+    <accelerometer name="specific_force_body" site="imu"/>
+  </sensor>
+</mujoco>

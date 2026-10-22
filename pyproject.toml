@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ebabil-mujoco"
+version = "0.1.0"
+description = "MuJoCo tabanlı quadrotor navigasyon ve pekiştirmeli öğrenme ortamı"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "gymnasium==1.3.0",
+    "mujoco==3.13.0",
+    "numpy==2.5.3",
+    "stable-baselines3==2.9.0",
+    "tensorboard==2.21.0",
+    "torch==2.14.0",
+]
+
+[project.optional-dependencies]
+# ADR-023: YOLO dedektör zinciri; çekirdek testler bu grup olmadan da geçer.
+detector = [
+    "pillow==12.3.0",
+    "ultralytics==8.4.163",
+]
+dev = [
+    "mypy==2.3.1",
+    "pytest==9.1.1",
+    "ruff==0.16.7",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ebabil = [
+    "assets/mjcf/*.xml",
+    "configs/controller/*.toml",
+    "configs/environment/*.toml",
+    "configs/evaluation/*.toml",
+    "configs/training/*.toml",
+    "configs/vehicle/*.toml",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.13"
+files = ["src/ebabil"]
+check_untyped_defs = true
+ignore_missing_imports = true
+warn_unused_configs = true

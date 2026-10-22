@@ -1,0 +1,16 @@
+[position]
+kp = [2.0, 2.0, 4.0]
+kd = [1.8, 1.8, 3.0]
+max_horizontal_acceleration_m_s2 = 4.0
+max_vertical_acceleration_m_s2 = 5.0
+max_tilt_rad = 0.6108652381980153
+
+[attitude]
+kp = [4.0, 4.0, 2.5]
+max_body_rate_rad_s = [3.0, 3.0, 2.0]
+
+[body_rate]
+kp = [20.0, 20.0, 12.0]
+ki = [1.0, 1.0, 0.5]
+integral_limit_rad = [0.3, 0.3, 0.2]
+max_torque_nm = [0.45, 0.45, 0.16]

@@ -1,0 +1,17 @@
+[scene]
+workspace_min_m = [-3.0, -2.5, 0.0]
+workspace_max_m = [3.0, 2.5, 2.5]
+start_world_m = [-2.0, 0.0, 1.0]
+goal_world_m = [2.0, 0.0, 1.0]
+random_endpoint_min_m = [-2.25, -1.75, 0.75]
+random_endpoint_max_m = [2.25, 1.75, 1.75]
+minimum_endpoint_separation_m = 2.0
+obstacle_count = 8
+obstacle_half_size_min_m = [0.15, 0.15, 0.40]
+obstacle_half_size_max_m = [0.45, 0.45, 1.20]
+endpoint_clearance_m = 0.40
+obstacle_clearance_m = 0.10
+vehicle_clearance_m = 0.25
+path_grid_resolution_m = 0.10
+max_sampling_attempts = 5000
+max_scene_attempts = 100

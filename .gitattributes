@@ -1,0 +1,15 @@
+# Depodaki eğitilmiş model dosyaları (runs/ altındaki onay zinciri) SHA-256 ile
+# doğrulanır; Git hiçbir platformda satır sonu dönüşümü yapmamalıdır.
+runs/** -text
+
+# İkili dosyalar
+*.pt binary
+*.pth binary
+*.zip binary
+*.pkl binary
+*.npz binary
+*.mp4 binary
+*.gif binary
+*.png binary
+*.jpg binary
+*.docx binary

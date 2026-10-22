@@ -1,0 +1,52 @@
+# ADR-010 D0-V: legacy `4-6 m` görev geometrisini `vision-v1` ile yeniden
+# öğrenmek. Sabit endpoint bilinçlidir; değişken endpoint D2'dedir ve onaylı
+# encoder sabit geometride eğitilmiştir (REV-018/REV-021).
+[run]
+total_timesteps = 300000
+seed = 20260911
+n_envs = 4
+vector_backend = "subproc"
+
+[environment]
+kind = "vision"
+scene_mode = "clear"
+endpoint_mode = "fixed"
+# ARTIK KOŞULAMAZ (ADR-021). Bu manifest `vision-encoder-v9` zinciridir ve
+# engel haritası kapısını içermez; `vision-v2` observation'ı `obstacle_map`
+# kanalını actor'a verdiği için `load_approved_vision_encoder` bu zinciri
+# fail-closed reddeder. D0-V sonuçları (best checkpoint 20/20) tarihsel
+# kayıttır ve `vision-v1` + `vision-action-v1` ile alınmıştır.
+#
+# D0-V yeniden koşulacaksa manifest `runs/vision_audit_v4_20260913` ile
+# değiştirilmeli ve sonucun eski sayılarla karşılaştırılamayacağı
+# bilinmeli: observation, action ve reward sözleşmelerinin üçü de değişti.
+approval_manifest = "runs/vision_audit_v2_20260911/approval_manifest.json"
+
+[ppo]
+learning_rate = 0.0003
+n_steps = 512
+batch_size = 256
+n_epochs = 10
+gamma = 0.99
+gae_lambda = 0.95
+clip_range = 0.2
+ent_coef = 0.0
+vf_coef = 0.5
+max_grad_norm = 0.5
+network_arch = [256, 256]
+
+# vision-v1 observation'ı zaten [-1, 1] aralığındadır; ayrıca normalize etmek
+# latent ölçeğini bozar. Reward normalization açık kalır.
+[normalization]
+observations = false
+rewards = true
+clip_observation = 10.0
+clip_reward = 10.0
+
+[checkpoint]
+save_frequency_timesteps = 50000
+evaluation_frequency_timesteps = 25000
+evaluation_episodes = 10
+
+[logging]
+tensorboard = true

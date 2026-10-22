@@ -1,0 +1,34 @@
+[camera]
+name = "imx477"
+sensor_width_px = 4056
+sensor_height_px = 3040
+output_width_px = 320
+output_height_px = 240
+frame_rate_hz = 30.0
+horizontal_fov_deg = 75.0
+position_body_m = [0.10, 0.0, -0.01]
+# REV-044 (14 Eylül 2026): 45.0 -> 40.0 derece.
+#
+# Kamera aşağı baktığı için ileri görüş mesafesi irtifayla ölçeklenir ve pitch
+# bu katsayıyı belirler: ileri görüş = irtifa / tan(pitch - vfov/2).
+#   45 derece -> 3.711 x irtifa   (seyir irtifası 2.156 m'de  8.00 m)
+#   40 derece -> 5.626 x irtifa   (aynı irtifada            12.13 m)  +%52
+#
+# Alt sınır, hold koşulunun geometrisinden gelir ve KESİNDİR: araç hedefin
+# güvenli iç bölgesinde (merkeze <= 0.65 m) dururken hedefi görmek zorundadır.
+# Yakın sınır = irtifa / tan(pitch + vfov/2) < 0.65 m olmalı, bu da
+# hover irtifası 1.51 m için pitch > 36.8 derece demektir.
+#   35 derece -> yakın sınır 0.71 m -> hold GEOMETRİK OLARAK İMKANSIZ
+#   37 derece -> 0.64 m (kıl payı)
+#   40 derece -> 0.55 m (3.2 derece pay)
+#
+# Neden şimdiye kadar 45'te kaldı: ADR-011 bu değeri fiziksel tezgâh
+# ölçümüne kadar geçici olarak sabitledi ve ADR-016 "bench ölçümü olmadan
+# değiştirilmez" dedi. O disiplin geçerliydi fakat 45'in ölçülmüş bir bedeli
+# ortaya çıktı: REV-036'da politika 0.81 m irtifaya inip yalnız 3.0 m
+# görebiliyordu ve 40 engelli sahnede kadraj sürekli engel doluydu.
+#
+# Bedeli: kamera geometrisi değişince BÜTÜN görüntüler değişir, yani encoder
+# dataset'i geçersiz olur ve onay zinciri (dataset -> kalite 3 seed -> audit)
+# yeniden kurulmak zorundadır.
+pitch_down_deg = 40.0

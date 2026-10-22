@@ -1,0 +1,102 @@
+{
+  "checks": {
+    "development_ood": {
+      "false_target_rate": true,
+      "false_target_rate_value": 0.0045662100456621,
+      "latency": true,
+      "latency_median_ms_value": 5.233000000771426,
+      "obstacle_precision": true,
+      "obstacle_precision_value": 0.9554869986778316,
+      "obstacle_recall": true,
+      "obstacle_recall_value": 0.9833641404805915,
+      "target_precision": true,
+      "target_precision_value": 0.9820359281437125,
+      "target_recall": true,
+      "target_recall_value": 0.9826839826839827
+    },
+    "validation": {
+      "false_target_rate": true,
+      "false_target_rate_value": 0.012987012987012988,
+      "latency": true,
+      "latency_median_ms_value": 5.849041500368912,
+      "obstacle_precision": true,
+      "obstacle_precision_value": 0.93927304964539,
+      "obstacle_recall": true,
+      "obstacle_recall_value": 0.9502026635784597,
+      "target_precision": true,
+      "target_precision_value": 0.9237804878048781,
+      "target_recall": true,
+      "target_recall_value": 0.9726027397260274
+    }
+  },
+  "grayscale_validation": {
+    "false_target_rate": 0.0,
+    "frames": 576.0,
+    "negative_frames": 231.0,
+    "obstacle_ground_truth_large": 1727.0,
+    "obstacle_precision": 0.9040948275862069,
+    "obstacle_predictions_counted": 1856.0,
+    "obstacle_recall": 0.7915460335842501,
+    "obstacle_recall_all_sizes": 0.6922442244224423,
+    "target_frames_near": 219.0,
+    "target_precision": 0.9193548387096774,
+    "target_predictions": 62.0,
+    "target_recall": 0.1689497716894977,
+    "target_recall_all_ranges": 0.16715542521994134
+  },
+  "map_info": {
+    "development_ood": {
+      "map50": 0.9711540393037958,
+      "map50_95": 0.8897566823489267,
+      "map50_obstacle": 0.9626494439645901,
+      "map50_target": 0.9796586346430016
+    },
+    "validation": {
+      "map50": 0.9261051178092339,
+      "map50_95": 0.8148665006675063,
+      "map50_obstacle": 0.9023257126562452,
+      "map50_target": 0.9498845229622226
+    }
+  },
+  "metrics": {
+    "development_ood": {
+      "false_target_rate": 0.0045662100456621,
+      "frames": 576.0,
+      "latency_frames": 100.0,
+      "latency_mean_ms": 5.271165820140595,
+      "latency_median_ms": 5.233000000771426,
+      "latency_p90_ms": 5.590050298815186,
+      "negative_frames": 219.0,
+      "obstacle_ground_truth_large": 1623.0,
+      "obstacle_precision": 0.9554869986778316,
+      "obstacle_predictions_counted": 2269.0,
+      "obstacle_recall": 0.9833641404805915,
+      "obstacle_recall_all_sizes": 0.9434290687554395,
+      "target_frames_near": 231.0,
+      "target_precision": 0.9820359281437125,
+      "target_predictions": 334.0,
+      "target_recall": 0.9826839826839827,
+      "target_recall_all_ranges": 0.9344729344729344
+    },
+    "validation": {
+      "false_target_rate": 0.012987012987012988,
+      "frames": 576.0,
+      "latency_frames": 100.0,
+      "latency_mean_ms": 5.779622890040628,
+      "latency_median_ms": 5.849041500368912,
+      "latency_p90_ms": 6.034295200333872,
+      "negative_frames": 231.0,
+      "obstacle_ground_truth_large": 1727.0,
+      "obstacle_precision": 0.93927304964539,
+      "obstacle_predictions_counted": 2256.0,
+      "obstacle_recall": 0.9502026635784597,
+      "obstacle_recall_all_sizes": 0.8741749174917491,
+      "target_frames_near": 219.0,
+      "target_precision": 0.9237804878048781,
+      "target_predictions": 328.0,
+      "target_recall": 0.9726027397260274,
+      "target_recall_all_ranges": 0.8885630498533724
+    }
+  },
+  "training_metadata": "seed_20260911/training_metadata.json"
+}
