@@ -154,16 +154,67 @@ dosyalardan biri taşınır veya değişirse yükleyici "Onay SHA-256 eşleşmiy
 hatasıyla durur (fail-closed). Bu tasarım gereğidir. `.gitattributes` bu
 dosyalarda satır sonu dönüşümünü kapatır; böylece Windows'ta da hash'ler
 değişmez. Dosyaları elle düzenlemeyin ve `runs/` altındaki yerleşimi
-bozmayın. Klon tamamlandığında doğrudan:
+bozmayın.
+
+Aşağıdaki dört komut depodaki modelle, klon ve kurulumdan hemen sonra
+çalışır (hepsi 22 Ekim 2026'da bu yollarla denendi). İlk üçü headless'tır.
+
+**a) Ortam ve dedektör smoke'u** (check_env, rastgele rollout, kısa PPO,
+kısa evaluation; ~20 s). Her şeyin yüklendiğini ve dedektörün hedefi
+gördüğünü doğrular:
 
 ```bash
-# Dedektörlü ortamın uçtan uca smoke'u: check_env, rastgele rollout, kısa PPO, evaluation
 .venv/bin/python scripts/smoke_detection_vision_env.py \
   runs/detector_audit_v1_20260929/approval_manifest.json \
   --scene-config src/ebabil/configs/environment/static_scene_d1a.toml \
   --output-dir runs/detection_vision_smoke
+```
 
-# README'deki demo videosunu yeniden üretmek (ffmpeg gerekir)
+**b) Politikayı değerlendirme.** Eğitimde hiç görülmeyen görsel alanda
+(`validation`), rastgele engel ve başlangıç/hedef yerleşimiyle, deterministik
+politika ve terminal yardımcı açık; 40 episode ~5 dk:
+
+```bash
+.venv/bin/python scripts/evaluate_vision_policy.py \
+  runs/detector_cone_d1a_seed20260912_20260929/final_model.zip \
+  runs/detector_audit_v1_20260929/approval_manifest.json \
+  runs/eval_seed12_heldout.json \
+  --scene-config src/ebabil/configs/environment/static_scene_d1a.toml \
+  --scene-mode random_obstacles --endpoint-mode random_both \
+  --episodes 40 --max-steps 1200 --env-version v2 \
+  --visual-domain-split validation --deterministic --terminal-assist on
+```
+
+Ekrana `success_rate`, `arrival_rate`, `collision_rate` ve bitiş sebepleri
+basılır; ayrıntı JSON'a yazılır. Bu komutla yazarın ölçümü: başarı `0.875`,
+varış `0.875`, çarpışma `0.050`. Hızlı kontrol için `--episodes 4` verin;
+22 Ekim 2026'da sonuç `4/4 hover_success`, çarpışma `0` idi. `--terminal-assist
+off` politikanın yardımcı olmadan ne yaptığını ölçer (hover başarısı `0`,
+ADR-025).
+
+**c) Bir episode'u MuJoCo viewer'da izleme.** Önce `500 Hz` replay kaydı
+(~20 s), sonra viewer:
+
+```bash
+.venv/bin/python scripts/record_vision_replay.py \
+  runs/detector_cone_d1a_seed20260912_20260929/final_model.zip \
+  runs/detector_audit_v1_20260929/approval_manifest.json \
+  runs/replays/seed12_ep310004.npz \
+  --seed 310004 --env-version v2 --terminal-assist on \
+  --scene-config src/ebabil/configs/environment/static_scene_d1a.toml \
+  --scene-mode random_obstacles --endpoint-mode random_both \
+  --visual-domain-split development_ood
+scripts/run_mjpython.sh scripts/view_policy_replay.py runs/replays/seed12_ep310004.npz --loop
+```
+
+`--seed 310004` + `development_ood`, README'deki demo episode'unun kendisidir
+(389 adımda `hover_success`). Başka bir episode için seed'i değiştirin;
+karanlık held-out alan için `--visual-domain-split validation`.
+
+**d) Üç panelli demo videosu** (drone kamerası + YOLO kutuları, dış takip
+kamerası, üstten harita; ffmpeg gerekir, ~30 s):
+
+```bash
 .venv/bin/python scripts/render_demo_video.py \
   runs/detector_cone_d1a_seed20260912_20260929/final_model.zip \
   runs/detector_audit_v1_20260929/approval_manifest.json \
@@ -172,6 +223,9 @@ bozmayın. Klon tamamlandığında doğrudan:
   --scene-config src/ebabil/configs/environment/static_scene_d1a.toml \
   --visual-domain-split development_ood
 ```
+
+Depodaki politikayı devam ettirmek (ek adım eğitmek) için §7.2 adım 7'deki
+`--resume` notuna bakın; `vecnormalize.pkl` bunun için depodadır.
 
 ### 7.2 Yol B: her şeyi sıfırdan üretmek
 
@@ -287,21 +341,11 @@ Seed'ler arası yayılım büyüktür ve MPS üzerinde eğitim bit düzeyinde
 tekrarlanabilir değildir; kendi koşunuzun bu aralığa düşmesi beklenir, aynı
 sayıları vermesi beklenmez.
 
-### 7.3 Replay kaydı ve demo
+### 7.3 Kendi politikanızla replay ve demo
 
-```bash
-.venv/bin/python scripts/record_vision_replay.py \
-  runs/detector_cone_d1a_seed20260912/final_model.zip \
-  runs/detector_audit/approval_manifest.json \
-  runs/replays/episode_310004.npz \
-  --seed 310004 --env-version v2 --terminal-assist on \
-  --scene-config src/ebabil/configs/environment/static_scene_d1a.toml \
-  --scene-mode random_obstacles --endpoint-mode random_both \
-  --visual-domain-split validation
-scripts/run_mjpython.sh scripts/view_policy_replay.py runs/replays/episode_310004.npz --loop
-```
-
-Üç panelli video için §7.1'deki `render_demo_video.py` komutu kullanılır.
+§7.1'deki c ve d komutlarında checkpoint yolunu kendi koşunuzun
+`final_model.zip` dosyasıyla, manifest yolunu kendi `approval_manifest.json`
+dosyanızla değiştirmek yeterlidir; diğer seçenekler aynıdır.
 
 ## 8. Diğer platformlar (Linux, CUDA, yalnız CPU)
 

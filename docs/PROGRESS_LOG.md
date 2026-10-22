@@ -220,6 +220,18 @@ dosyalardan doğruladı. Sonra `git init -b main`, `git add .` (227 dosya,
 `git push -u origin main`; uzak `refs/heads/main` aynı hash'te.
 Kimlik global git config'ten, kimlik bilgisi macOS keychain'den geldi.
 
+### Ek 2 (aynı gün): kurulum belgelerinde "depodaki modelle çalıştırma"
+
+Kullanıcı sorusu üzerine ("bizim eğittiğimiz model ile projeyi nasıl
+çalıştıracağı yazıyor değil mi") §7.1 yeniden düzenlendi: depodaki yollarla
+dört komut (a smoke, b held-out evaluation, c replay kaydı + viewer, d üç
+panelli demo) ve beklenen çıktılar; §7.3 artık kendi politikası için yol
+değiştirme notudur. Dördü de bugün bu yollarla koşturuldu: a `17 s`
+(`steps_per_second 29.3`), b 4 episode `4/4 hover_success`, c `18 s`
+(`389` adım, demo episode'uyla aynı), d `27 s` (`1760x480`, `20.5 s`,
+README'deki mp4 ile aynı boyut). Commit ve push kullanıcının aynı gün
+verdiği izinle yapıldı.
+
 ## 1 Ekim 2026 — Sistem mimarisi diyagramı (PNG)
 
 ### Amaç ve kapsam
