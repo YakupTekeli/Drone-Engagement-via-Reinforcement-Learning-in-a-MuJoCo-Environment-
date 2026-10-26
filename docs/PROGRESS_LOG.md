@@ -216,8 +216,9 @@ girecek dosyalarla doğrulama: `evaluate_vision_policy.py` (held-out
 `validation`, deterministik, yardımcı açık, 4 episode) `4/4 hover_success`,
 çarpışma 0, ortalama getiri `+111.5`; onay yükleyicisi hash zincirini aynı
 dosyalardan doğruladı. Sonra `git init -b main`, `git add .` (227 dosya,
-`runs/` 11, sızıntı 0, 15.2 MB), commit `35d9495` ve
-`git push -u origin main`; uzak `refs/heads/main` aynı hash'te.
+`runs/` 11, sızıntı 0, 15.2 MB), commit `35d9495` (26 Ekim'de `11c8c6c`
+olarak yeniden yazıldı, bkz. Ek 3) ve `git push -u origin main`; uzak
+`refs/heads/main` aynı hash'te.
 Kimlik global git config'ten, kimlik bilgisi macOS keychain'den geldi.
 
 ### Ek 2 (aynı gün): kurulum belgelerinde "depodaki modelle çalıştırma"
@@ -231,6 +232,18 @@ değiştirme notudur. Dördü de bugün bu yollarla koşturuldu: a `17 s`
 (`389` adım, demo episode'uyla aynı), d `27 s` (`1760x480`, `20.5 s`,
 README'deki mp4 ile aynı boyut). Commit ve push kullanıcının aynı gün
 verdiği izinle yapıldı.
+
+### Ek 3 (26 Ekim 2026): commit mesajlarından agent katkıcı satırının kaldırılması
+
+Kullanıcı, GitHub'ın commit mesajlarındaki `Co-Authored-By: Claude ...`
+satırı yüzünden agent'ı katkıcı olarak göstermesini istemedi. Üç commit'in
+mesajı `git filter-branch --msg-filter` ile yalnız bu satır silinerek
+yeniden yazıldı; yazar, tarih ve içerik değişmedi. Eski -> yeni hash'ler:
+`35d9495 -> 11c8c6c`, `b09b50c -> 19d736f`, `5003fd3 -> 8ded0d6`. Yeniden
+yazılmış dalın GitHub'a gönderilmesi (`git push --force-with-lease origin
+main`) kullanıcıya bırakıldı. Bundan sonraki commit'lerde bu satır
+kullanılmaz. Geçmiş değiştiği için 22-26 Ekim arasında klonlayan biri
+`git clone` ile yeniden almalıdır (yerel değişikliği yoksa).
 
 ## 1 Ekim 2026 — Sistem mimarisi diyagramı (PNG)
 
