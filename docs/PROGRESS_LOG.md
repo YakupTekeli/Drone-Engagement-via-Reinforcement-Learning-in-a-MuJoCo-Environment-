@@ -19,6 +19,7 @@ Bu belge yaşayan proje durumudur. En yeni kayıt üstte tutulur. Her agent iş 
 | Faz 7: D0-V kamera tabanlı yerel politika | Tarihsel; `20/20` ölçümü `vision-v1`/`action-v1` ile alındı |
 | Faz 7: D1 engelli + yaklaşık hedef | Dokuz koşu (13-14 Eylül); engelli her koşu `%0` başarı; REV-039..046 kendi ekseninde çalıştı, başarı üretmedi |
 | **Faz 7.5: Görsel algı (ADR-022 VAE -> ADR-023 dedektör + politika)** | **26 Eylül 2026: kullanıcı kararıyla iki modelli algıya geçildi (ADR-023):** YOLO dedektör (hedef/engel kutuları) + PPO politikası, `vision-v4` (88 boyut), `EbabilVisionNavigation-v2`; plan §24 Dilim A (belgeler) tamam; Dilim B 1/2 tamam: zemin yansıması kapatıldı (kullanıcı kararı), dataset yeniden üretildi, YOLO etiketleri `runs/yolo_dataset_d1nr_20260926` (6528 kare, 26554 engel + 3874 hedef kutusu), 8 karede görsel kontrol hatasız. ADR-022 zinciri (onaylı `visual-vae-v1`, `v1` ortamı, `vision-v3`, Dilim 1-2) karşılaştırma baseline'ı olarak korunur; Dilim 3 eğitimi `528k / 600k` adımda iptal edildi, evaluation koşulmadı. **Dilim B ve C tamam (29 Eylül):** YOLO11n tek seed (kullanıcı kararı) geliştirme kapılarını geçti (engel recall `0.95-0.98`, hedef recall `0.97-0.98`, `~5.5 ms`); audit elipsoitlerde geçmedi (REV-050), kullanıcı kararıyla eğitim şekilleriyle sınırlı onay (`runs/detector_audit_v1_20260929/approval_manifest.json`). `EbabilVisionNavigation-v2` / `vision-v4` tamam: 20 test (tam paket 357), gerçek dedektörle smoke temiz, throughput `0.54 x v0` (tanı kapalı), PPO kuru koşusu `~100` adım/s. **Dilim D seed 1 (29 Eylül):** held-out arrival `%55` (kapı `%80`), çarpışma `%35` (kapı `%10`), başarı 0; çarpışmaların 13/14'ü kameranın görmediği yöne uçuştan (REV-051), hedef kayıplarının çoğu hedef üstünde tutunamamadan. Kullanıcı kararıyla ADR-024 "baktığın yöne uç" kısıtı uygulandı (`vision-action-v3`, 367 test); koni kısıtlı seed `20260912` held-out: arrival `%70` (önce `%55`), çarpışma `%17.5` (önce `%35`), hover başarısı 0; kapılar henüz geçilmedi. **30 Eylül, Dilim D kapanışı:** nihai yapılandırma (koni R1 + koridor hız sınırlayıcı + erken kayıp kuralı + ADR-025 terminal yardımcı) üç seed held-out ortalaması: hover başarısı `%84.2`, arrival `%84.2` (kapı `>= %80` geçti), çarpışma `%13.3` (kapı `<= %10` geçilmedi; seed'ler `%5 / %22.5 / %12.5`). Projede ilk başarılı hover'lar (önceki bütün politikalar `%0`). Demo: `runs/demo_20260930/`. |
+| Dağıtım: Unreal/ROS köprüsü | 29 Ekim 2026: `src/ebabil/deploy/` çekirdek + `scripts/ros_policy_bridge.py` + `docs/UNREAL_ROS_ENTEGRASYON.md`; eğitim sözleşmesini yeniden kullanır, temassız yaklaş-dur. Çekirdek gerçek modelle doğrulandı; ROS/UE tarafı kullanıcıda. |
 | Depo yayını hazırlığı | 22 Ekim 2026: `docs/KURULUM.md` / `docs/GETTING_STARTED.md` (temiz venv'de doğrulandı), `docs/media/` demo GIF+mp4, README Demo/Kurulum bölümleri; onaylı dedektör + seed 20260912 politikası (11 dosya, ~7.8 MB) `.gitignore` istisnasıyla depoya dahil, `.gitattributes` hash zincirini korur. GitHub'a gönderme kullanıcıda. |
 | Faz 7+: D1 yoğunluk merdiveni | ADR-023 Dilim D kapısını bekliyor |
 | Faz 7+: D2-D4 mesafe merdiveni | ADR-018 ön koşullarını bekliyor |
@@ -108,6 +109,94 @@ localization yöntemi ve kamera-IMU zaman senkronizasyonu.
 | 8 | D1 yoğunluk merdiveni `5 -> 10 -> 20 -> 40` | 7c kapısını bekliyor |
 | 9 | D2-D5 mesafe merdiveni ve kompozisyon evaluation'ı | Bekliyor |
 | 10 | Robustluk, Jetson, SITL/HITL ve safety | Bekliyor |
+
+## 29 Ekim 2026 — Dağıtım köprüsü: politikayı Unreal Engine'e (ROS) taşıma çekirdeği
+
+### Amaç ve kapsam
+
+Kullanıcı eğitilmiş politikayı Unreal Engine'deki bir simülasyona (engel =
+ağaç, hedef = tank; kendi YOLO modelleriyle) ROS üzerinden taşımak istiyor.
+Senaryo kullanıcı kararıyla "ağaçlardan kaçınarak tanka yönel, güvenli bir
+TEMASSIZ yakın mesafede dur" olarak kuruldu. Kullanıcı önce hedefe çarpma,
+sonra "0 m'ye yaklaşma" istedi; ikisi de fiziksel temas (vuruş davranışı)
+olduğu için reddedildi ve temassız yaklaş-dur olarak kurgulandı. Köprü, eğitim
+observation ve kısıt fonksiyonlarını BİREBİR yeniden kullanır (davranış
+sürüklenmesi olmasın diye).
+
+### Oluşturulan/değiştirilen dosyalar
+
+```text
+src/ebabil/deploy/__init__.py            yeni: dağıtım köprüsü paketi
+src/ebabil/deploy/policy_runner.py       yeni: çatı-bağımsız çekirdek (build_observation, command, step,
+                                         load_policy_predict_fn, camera_geometry_from_intrinsics,
+                                         quaternion_wxyz_to_matrix); standoff tabanıyla temassızlık
+scripts/ros_policy_bridge.py             yeni: ROS 2 düğüm iskeleti (Image+Odometry -> YOLO -> politika -> Twist)
+docs/UNREAL_ROS_ENTEGRASYON.md           yeni: mimari, çerçeve/birim sözleşmesi, kamera eşleme, topic'ler,
+                                         çalıştırma, aktarım sınırlılığı, güvenlik
+tests/test_policy_runner.py              yeni: 10 test (gözlem şekli/aralık, koni, governor, yüzey-payı standoff, yaw ortalama)
+```
+
+### Alınan teknik kararlar ve gerekçeleri
+
+1. **Eğitim sözleşmesini yeniden kullan.** `build_observation` ve `command`,
+   `ebabil.perception.detection_slots`, `ebabil.envs.motion_constraint` ve
+   `vision.py`'deki ölçekleri aynen çağırır (max_h 1.5, max_v 1.0, yaw 1.5,
+   angular ölçek [3,3,2], waypoint_distance_scale 30, max_frame_age 0.10,
+   workspace z [0,3], range_max 12, koni yarım açı 30, koridor governor).
+   Çekirdek SB3'ten bağımsızdır: `predict` bir callable'dır, böylece test
+   modelsiz koşar.
+2. **Çerçeve çevirisi ROS tarafında gerekmez.** Politika gövde FLU + sağ-elli
+   dünya kullanır; bu ROS REP-103 (base_link FLU + ENU) ile aynıdır. Sol-elli,
+   cm Unreal çerçevesine dönüşüm mevcut Pixhawk-UE köprüsünün işidir. Çekirdek
+   yalnız SI + FLU üretir. Belgede doğrulama prosedürü var.
+3. **Terminal davranış: temassız yaklaş-dur, mesafe YÜZEYE göre.** Tank
+   yükseltilmiş 3B cisim olduğu için düz-kare terminal yardımcı (ADR-025) uygun
+   değil; onun yerine yaklaşık waypoint mesafesi durma mesafesinin altına inince
+   yatay dur + irtifa tut + yaw ile hedefi ortala. Kullanıcı durma mesafesini
+   `0.5 m` istedi; mesafe tankın MERKEZİNE ölçülseydi (±2 m belirsizlik + tank
+   ~3.5x7 m) bu tankın içi = temas olurdu. Bu yüzden mesafe tankın YÜZEYİNE göre
+   tanımlandı: `effective_standoff = target_radius_m + clearance`. Kullanıcının
+   `0.5 m`'si yüzey payıdır (`surface_clearance_m`); pozitif taban
+   `surface_clearance_floor_m = 0.3` ile temas her hâlükârda engellenir
+   (testler `test_surface_clearance_floor_prevents_contact`,
+   `test_surface_clearance_sets_stop_distance_beyond_radius`). Fiziksel
+   temas/çarpma ve merkeze küçük mesafe bilinçli olarak kapsam dışı (güvenlik
+   sınırı).
+4. **Standoff tetikleyicisi dedektör değil waypoint.** Dedektörün tank menzili
+   düz-kare zemin varsayımına dayandığı için güvenilir değil; yaklaşık hedef
+   konumuna yatay mesafe kullanılır.
+
+### Çalıştırılan komutlar/testler ve sonuçları
+
+```text
+.venv/bin/python -m pytest -q                      392 passed, 117 subtests (önce 382; +10 yeni)
+.venv/bin/ruff check src scripts tests             All checks passed!
+.venv/bin/ruff format --check src scripts tests     129 files already formatted
+.venv/bin/mypy                                      Success: no issues found in 63 source files
+gerçek model ile tek adım (depodaki final_model.zip): gözlem kabul edildi;
+  uzakta phase=transit (ileri + koni kısıtlı yan), standoff içinde phase=hold
+  (yatay 0, yaw ile ortala)
+```
+
+### Bilinen sınırlılıklar ve riskler
+
+- ROS 2 / Unreal tarafı bu depoda ÇALIŞTIRILAMADI (rclpy, cv_bridge, UE yok).
+  `scripts/ros_policy_bridge.py` doğrulanmış çekirdeği saran iskelettir; ROS'lu
+  ortamda denenmeli.
+- Aktarım kalitesi açık: politika düz-kare hedef + basit zemin engelleriyle
+  eğitildi. Ağaç (uzun ince) ve tank (yükseltilmiş) için menzil geometrisi
+  yaklaşıktır; kaçınma/yönelme büyük olasılıkla çalışır ama ince ayar gerekebilir.
+- Çözüm adayı (sonraki iş dilimi): ağaç/tank geometrisine benzeyen MuJoCo
+  sahnesi (uzun ince engel + yükseltilmiş hedef) kurup kısa yeniden eğitim.
+- Köprü yeni bir sözleşme getirmiyor (observation/action/reward değişmedi),
+  bu yüzden ADR açılmadı; Unreal dağıtımı kalıcı yol olursa bir dağıtım ADR'si
+  (ör. ADR-026) bu köprü sözleşmesini belgeleyebilir.
+
+### Sonraki önerilen adım
+
+Kullanıcı ROS 2 ortamında köprüyü dener (topic adları, kamera FOV/pitch eşleme,
+hız komutu tüketimi). Davranış zayıfsa ağaç/tank-benzeri MuJoCo sahnesinde
+ince ayar iş dilimi. Ayrıca REV-051 çarpışma kapısı kararı hâlâ açık.
 
 ## 22 Ekim 2026 — Depo yayını hazırlığı: kurulum belgeleri (TR/EN) ve demo medyası
 
